@@ -346,23 +346,40 @@ const requestHandler = function (req, res) {
   });
 };
 
-// 证书存在则启用 HTTPS（局域网设备麦克风需要安全上下文）；同时在 port+1 起 HTTP 跳转
+// 证书存在则启用 HTTPS（局域网设备麦克风需要安全上下文）；同一端口兼容误输的 http（自动 301 到 https）
+// 同端口双协议分流（参考 httpolyglot 思路）：读首字节，<32 为 TLS 握手，否则按明文 HTTP
 const CERT_FILE = path.join(ROOT, 'certs', 'cert.pem');
 const KEY_FILE = path.join(ROOT, 'certs', 'key.pem');
 let useTLS = false;
 try { useTLS = fs.existsSync(CERT_FILE) && fs.existsSync(KEY_FILE); } catch (e) {}
-const server = useTLS
-  ? https.createServer({ key: fs.readFileSync(KEY_FILE), cert: fs.readFileSync(CERT_FILE) }, requestHandler)
-  : http.createServer(requestHandler);
+let server, wsServer;
 if (useTLS) {
-  http.createServer(function (req, res) {
-    const host = (req.headers.host || '').replace(/:\d+$/, ':' + cfg0_port());
-    res.writeHead(301, { Location: 'https://' + host + req.url }); res.end();
-  }).listen(cfg0_port() + 1, '0.0.0.0');
+  server = https.createServer({ key: fs.readFileSync(KEY_FILE), cert: fs.readFileSync(CERT_FILE) }, function (req, res) {
+    if (!req.socket.encrypted) { res.writeHead(301, { Location: 'https://' + (req.headers.host || ('localhost:' + readConfig().port)) + req.url }); res.end(); return; }
+    return requestHandler(req, res);
+  });
+  const connEv = server._events.connection;
+  const tlsHandler = typeof connEv === 'function' ? connEv : connEv[connEv.length - 1];
+  server.removeListener('connection', tlsHandler);
+  const plainHandler = http._connectionListener;
+  server.on('connection', function (socket) {
+    socket.on('error', function () { try { socket.destroy(); } catch (e) {} });
+    (function route(first) {
+      const b = (first !== undefined) ? first : socket.read(1);
+      if (b === null) { socket.once('readable', function () { route(); }); return; }
+      if (!b) return;
+      socket.unshift(b);
+      if (b[0] < 32 || b[0] >= 127) tlsHandler.call(server, socket);
+      else plainHandler.call(server, socket);
+    })();
+  });
+  wsServer = server;
+} else {
+  server = http.createServer(requestHandler);
+  wsServer = server;
 }
-function cfg0_port() { return readConfig().port; }
 
-server.on('upgrade', function (req, socket) {
+wsServer.on('upgrade', function (req, socket) {
   if ((req.url || '').split('?')[0] !== '/asr') { socket.destroy(); return; }
   const key = req.headers['sec-websocket-key'];
   if (!key) { socket.destroy(); return; }
@@ -390,7 +407,7 @@ server.listen(cfg0.port, '0.0.0.0', function () {
   if (lanIp) {
     console.log(' 局域网其他设备（手机/平板/队友电脑，需连同一 WiFi）：');
     console.log('   ' + scheme + '://' + lanIp + ':' + cfg0.port);
-    if (useTLS) console.log('   首次打开会提示证书不受信任：点「高级/显示详细信息」→「仍要继续」即可，iPhone 需在 设置→通用→关于本机→证书信任设置 中信任一次');
+    if (useTLS) console.log('   输成 http 也会自动跳转；iPhone 若麦克风不可用，先用 Safari 访问 /certs/cert.pem 安装证书并在「设置→通用→关于本机→证书信任设置」开启信任');
     else console.log('   警告：HTTP 明文地址下浏览器会禁用麦克风，仅本机 127.0.0.1 可用；要给局域网用请放入 certs/ 证书启用 HTTPS');
   }
   console.log(' 密钥状态：' + (cfg0.apiKey || (cfg0.appKey && cfg0.accessKey) ? '已配置' : '未配置（请编辑 config.json 后重启）'));
