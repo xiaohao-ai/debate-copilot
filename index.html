@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>反方作战台 · AI伴侣算真正的陪伴吗</title>
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@500;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap">
+<style>
+  :root{
+    --bg:#EDEEE8; --panel:#FAFAF6; --ink:#1C1D1A; --ink2:#56594F; --line:#D8D6C9;
+    --jade:#176B5F; --jade-deep:#0F4E46; --jade-soft:#DFECE7;
+    --brick:#BC4B2E; --brick-deep:#93381F; --brick-soft:#F6E4DE;
+    --amber:#A9791F; --amber-soft:#F4EBD4;
+    --shadow:0 1px 2px rgba(28,29,26,.05),0 6px 18px rgba(28,29,26,.06);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);color:var(--ink);
+    font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+    font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;
+  }
+  .serif{font-family:'Noto Serif SC','Songti SC','SimSun',serif;}
+  .mono{font-family:ui-monospace,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace;}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 18px 64px;}
+
+  /* ===== 顶栏 ===== */
+  header.top{background:var(--panel);border-bottom:1px solid var(--line);}
+  .top-inner{max-width:1180px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+  .brand{display:flex;flex-direction:column;gap:2px;margin-right:auto;}
+  .eyebrow{font-size:11px;letter-spacing:.18em;color:var(--jade);font-weight:700;}
+  .brand h1{font-size:18px;margin:0;font-weight:900;letter-spacing:.01em;}
+  nav.tabs{display:flex;gap:6px;flex-wrap:wrap;}
+  .tab{
+    appearance:none;border:1px solid var(--line);background:transparent;color:var(--ink2);
+    padding:9px 16px;border-radius:999px;font-size:14px;font-weight:500;cursor:pointer;
+    min-height:44px;font-family:inherit;transition:all .15s ease;
+  }
+  .tab:hover{border-color:var(--jade);color:var(--jade);}
+  .tab.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+
+  .view{display:none;padding-top:22px;}
+  .view.active{display:block;}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);}
+  .card h3{margin:0 0 10px;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;}
+  .hint{font-size:12.5px;color:var(--ink2);}
+  .tag{display:inline-block;font-size:11.5px;padding:2px 9px;border-radius:999px;background:var(--jade-soft);color:var(--jade-deep);margin:2px 4px 2px 0;font-weight:500;}
+  .tag.brick{background:var(--brick-soft);color:var(--brick-deep);}
+  .tag.amber{background:var(--amber-soft);color:var(--amber);}
+
+  button.btn{
+    appearance:none;font-family:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);
+    background:#fff;color:var(--ink);padding:10px 16px;font-size:14px;min-height:44px;font-weight:500;transition:all .15s;
+  }
+  button.btn:hover{border-color:var(--jade);color:var(--jade);}
+  button.btn.primary{background:var(--jade);border-color:var(--jade);color:#fff;}
+  button.btn.primary:hover{background:var(--jade-deep);color:#fff;}
+  button.btn.danger{background:var(--brick);border-color:var(--brick);color:#fff;}
+  button.btn.ghost{background:transparent;}
+  button.btn.sm{min-height:36px;padding:6px 12px;font-size:13px;}
+  textarea,input[type=text],input[type=number]{
+    width:100%;font-family:inherit;font-size:14.5px;color:var(--ink);background:#fff;
+    border:1px solid var(--line);border-radius:10px;padding:11px 12px;line-height:1.6;resize:vertical;
+  }
+  textarea:focus,input:focus{outline:2px solid rgba(23,107,95,.25);border-color:var(--jade);}
+  label.flabel{display:block;font-size:12.5px;font-weight:700;color:var(--ink2);margin:10px 0 5px;}
+
+  /* ===== 听对方：双栏 ===== */
+  .grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:16px;align-items:start;}
+  .mic-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .seg{display:flex;gap:6px;flex-wrap:wrap;}
+  .seg-btn{appearance:none;font-family:inherit;font-size:13.5px;min-height:44px;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink2);cursor:pointer;transition:all .15s;}
+  .seg-btn:hover{border-color:var(--jade);color:var(--jade);}
+  .seg-btn.active{background:var(--jade);border-color:var(--jade);color:#fff;font-weight:600;}
+  .mic-btn{
+    width:74px;height:74px;border-radius:50%;border:2px solid var(--jade);background:var(--jade-soft);
+    color:var(--jade-deep);font-size:14px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:2px;flex:none;transition:all .2s;font-family:inherit;
+  }
+  .mic-btn .dot{width:10px;height:10px;border-radius:50%;background:var(--jade);}
+  .mic-btn.listening{border-color:var(--brick);background:var(--brick-soft);color:var(--brick-deep);animation:pulse 1.4s infinite;}
+  .mic-btn.listening .dot{background:var(--brick);}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(188,75,46,.35);}70%{box-shadow:0 0 0 14px rgba(188,75,46,0);}100%{box-shadow:0 0 0 0 rgba(188,75,46,0);}}
+  .transcript{
+    margin-top:12px;min-height:150px;max-height:260px;overflow:auto;background:#fff;border:1px solid var(--line);
+    border-radius:10px;padding:12px;font-size:14.5px;line-height:1.75;
+  }
+  .interim{color:var(--ink2);font-style:italic;}
+  .actions-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+
+  /* 命中面板 */
+  .hit-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .hit-code{font-size:12px;font-weight:700;letter-spacing:.08em;padding:4px 10px;border-radius:8px;background:var(--ink);color:#fff;}
+  .score{margin-left:auto;font-size:12.5px;color:var(--amber);font-weight:700;}
+  .rebuttal{
+    margin-top:12px;background:#fff;border:1px solid var(--line);border-left:4px solid var(--jade);
+    border-radius:10px;padding:14px 16px;font-size:16px;line-height:1.9;
+  }
+  .cand-list{margin-top:12px;display:flex;flex-direction:column;gap:6px;}
+  .cand{
+    text-align:left;width:100%;background:#fff;border:1px solid var(--line);border-radius:9px;padding:9px 12px;
+    cursor:pointer;font-family:inherit;font-size:13.5px;display:flex;gap:8px;align-items:baseline;min-height:44px;
+  }
+  .cand:hover{border-color:var(--jade);}
+  .cand .c-code{font-size:11px;color:var(--ink2);font-weight:700;flex:none;}
+  .fallback{background:var(--amber-soft);border:1px dashed var(--amber);border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.75;}
+  .log-list{max-height:200px;overflow:auto;font-size:12.5px;}
+  .log-item{padding:7px 0;border-bottom:1px dashed var(--line);display:flex;gap:10px;}
+  .log-item .t{color:var(--ink2);flex:none;font-family:ui-monospace,Menlo,monospace;}
+
+  .strip{margin-top:16px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
+  .std{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
+  .std b{display:block;font-size:13.5px;margin-bottom:3px;}
+  .std span{font-size:12.5px;color:var(--ink2);}
+  .quotes{margin-top:12px;display:flex;flex-direction:column;gap:7px;}
+  .quote{background:#fff;border:1px solid var(--line);border-radius:9px;padding:9px 12px;font-size:13.5px;display:flex;gap:10px;align-items:flex-start;}
+  .quote .qn{color:var(--amber);font-weight:700;flex:none;}
+
+  /* ===== 我发言 ===== */
+  .phase-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .phase{
+    appearance:none;border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 13px;min-height:44px;
+    font-family:inherit;font-size:13.5px;cursor:pointer;color:var(--ink2);
+  }
+  .phase.active{background:var(--jade);border-color:var(--jade);color:#fff;font-weight:600;}
+  .script-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;}
+  .script-body{
+    background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px 22px;font-size:16.5px;line-height:2;
+    max-height:62vh;overflow:auto;
+  }
+  .script-body p{margin:0 0 13px;}
+  .timer-box{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .timer-num{font-size:30px;font-weight:700;font-family:ui-monospace,Menlo,monospace;letter-spacing:.04em;}
+  .timer-num.warn{color:var(--brick);}
+  .preset{font-size:12.5px;padding:6px 10px;min-height:36px;border-radius:8px;}
+
+  /* ===== 话术库 / 陪练 ===== */
+  .search-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  .search-row input{flex:1 1 240px;}
+  .lib-card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px 16px;margin-bottom:12px;}
+  .lib-card .opp{background:var(--brick-soft);color:var(--brick-deep);border-radius:9px;padding:10px 13px;font-size:14px;}
+  .lib-card .mine{margin-top:10px;background:#fff;border-left:4px solid var(--jade);border-radius:8px;padding:10px 13px;font-size:14.5px;line-height:1.8;}
+  .lib-foot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;}
+  .steps{counter-reset:s;display:flex;flex-direction:column;gap:10px;margin:6px 0;}
+  .step{position:relative;background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 14px 11px 46px;font-size:14px;line-height:1.7;}
+  .step::before{counter-increment:s;content:counter(s);position:absolute;left:12px;top:11px;width:24px;height:24px;border-radius:50%;background:var(--jade);color:#fff;font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+  .copybox{position:relative;background:var(--ink);color:#EDEEE8;border-radius:11px;padding:14px 16px;font-size:14px;line-height:1.85;}
+  .custom-badge{font-size:11px;background:var(--amber-soft);color:var(--amber);padding:2px 8px;border-radius:999px;font-weight:700;}
+
+  details{background:#fff;border:1px solid var(--line);border-radius:11px;padding:4px 14px;}
+  summary{cursor:pointer;font-weight:600;font-size:14px;padding:9px 0;min-height:32px;}
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:#fff;
+    padding:10px 20px;border-radius:999px;font-size:13.5px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:99;
+  }
+  .toast.show{opacity:.95;}
+  .unsupported{background:var(--brick-soft);border:1px solid var(--brick);color:var(--brick-deep);border-radius:10px;padding:11px 13px;font-size:13.5px;margin-top:10px;line-height:1.7;}
+  .env-box{border:1px solid var(--line);border-radius:10px;background:#fff;overflow:hidden;}
+  .env-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:8px 12px;font-size:13px;border-bottom:1px dashed var(--line);}
+  .env-row:last-child{border-bottom:none;}
+  .env-ok{color:var(--jade);font-weight:600;}
+  .env-bad{color:var(--brick);font-weight:600;}
+  .perm-details{margin-top:10px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:2px 14px;}
+  .perm-guide p{font-size:13px;line-height:1.75;margin:8px 0;}
+  .perm-guide b{font-weight:700;}
+
+  @media (max-width:900px){
+    .grid2{grid-template-columns:1fr;}
+    .strip{grid-template-columns:1fr;}
+    .top-inner{gap:10px;}
+    .script-body{font-size:15.5px;padding:16px;}
+  }
+  /* 辩位条与 AI 生成区 */
+  .pos-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;padding:10px 14px;background:var(--panel);border:1px solid #DDDCCF;border-radius:12px;font-size:13.5px;}
+  .pos-bar b{font-size:14px;}
+  .pos-bar select{min-height:40px;padding:6px 10px;border:1px solid #C9C8BA;border-radius:8px;background:#fff;font-size:14px;color:var(--ink);font-family:inherit;}
+  .pos-stage{color:var(--jade);font-weight:600;}
+  .ai-panel{margin-top:14px;padding-top:14px;border-top:1.5px dashed #D6D5C8;}
+  .ai-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+  .ai-out{margin-top:10px;min-height:96px;max-height:460px;overflow:auto;background:#F4F3EA;border:1px solid #DDDCCF;border-left:4px solid var(--jade);border-radius:10px;padding:12px 14px;font-size:15px;line-height:1.85;white-space:pre-wrap;}
+  .ai-out.idle{color:#8A8C80;border-left-color:#C9C8BA;}
+  .ai-out.generating::after{content:"▍";color:var(--jade);animation:blink 1s steps(1) infinite;}
+  @keyframes blink{50%{opacity:0;}}
+  .ai-meter{margin-top:8px;font-size:12.5px;color:#56594F;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .meter-track{flex:1;min-width:120px;height:8px;background:#E4E3D7;border-radius:6px;overflow:hidden;}
+  .meter-fill{height:100%;width:0;background:var(--jade);border-radius:6px;transition:width .25s;}
+  .meter-fill.over{background:var(--amber);}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <span class="eyebrow mono">NEGATIVE SIDE · 反方作战台</span>
+      <h1 class="serif">辩题：AI 伴侣算真正的陪伴吗？</h1>
+    </div>
+    <nav class="tabs">
+      <button class="tab active" data-route="listen">听对方 · 实时反驳</button>
+      <button class="tab" data-route="speak">我发言 · 逐字稿</button>
+      <button class="tab" data-route="library">话术库</button>
+      <button class="tab" data-route="spar">陪练</button>
+    </nav>
+    <div class="pos-bar">
+      <b>我的辩位</b>
+      <select id="posSelect" aria-label="选择我的辩位">
+        <option value="generic">未定辩位 · 通用模式</option>
+        <option value="p1">一辩 · 立论陈词 7 分钟</option>
+        <option value="p2">二辩 · 驳论与质询 6 分钟</option>
+        <option value="p3">三辩 · 一对一攻防 6 分钟</option>
+        <option value="p4">四辩 · 总结陈词 4 分钟</option>
+        <option value="p5">五辩 · 战术定调 1 分钟</option>
+        <option value="p6">六辩 · 一对一攻防 6 分钟</option>
+        <option value="p7">七辩 · 一对一攻防 6 分钟</option>
+        <option value="p8">八辩 · 丢点梳理 2 分钟</option>
+        <option value="p9">九辩 · 自由辩短打</option>
+        <option value="p10">十辩 · 自由辩短打</option>
+      </select>
+      <span class="pos-stage" id="posStage"></span>
+      <span class="hint">AI 生成的结构、时长与话术数量按所选辩位自动裁剪</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ============ 视图一：听对方 ============ -->
+  <section class="view active" data-view="listen">
+    <div class="grid2">
+
+      <div class="card">
+        <h3>对方发言 · 实时收音
+          <span class="tag amber mono">SPEECH-TO-TEXT</span>
+        </h3>
+        <label class="flabel" style="margin-top:0;">识别引擎（国内网络 / 辩论术语优先选豆包）</label>
+        <div class="seg" id="engineSeg">
+          <button class="seg-btn active" data-engine="web" type="button">浏览器自带 · 免配置</button>
+          <button class="seg-btn" data-engine="volc" type="button">豆包流式识别 · 本地代理</button>
+        </div>
+        <div id="envStatus" class="env-box" style="margin-top:10px;"></div>
+        <div class="mic-row" style="margin-top:12px;">
+          <button class="mic-btn" id="micBtn"><span class="dot"></span><span id="micLabel">开始收音</span></button>
+          <div>
+            <div style="font-size:14px;font-weight:600;" id="micState">未开始</div>
+            <div class="hint" style="margin-top:3px;">语音转写需浏览器联网（系统 Chrome / Edge 效果最好）；“话术→反驳”的匹配在本机运行，断网也能用手动输入。</div>
+          </div>
+        </div>
+        <div id="permAlert" class="unsupported" style="display:none;"></div>
+        <div class="transcript" id="transcript"><span class="hint">对方说的话会实时出现在这里……</span></div>
+        <details class="perm-details">
+          <summary>麦克风没权限 / 点了没反应？点这里看：开“谁”的权限、在哪里开</summary>
+          <div class="perm-guide">
+            <p><b>权限有两层，缺一不可：① 操作系统给浏览器的麦克风权限；② 浏览器给“本页面”的麦克风权限。</b></p>
+            <p><b>第 0 步（最常见）：先换对浏览器。</b>如果你是在豆包、微信等 App 的内置窗口里打开本页，内置网页通常不支持语音识别、也不发放麦克风。请关闭内置窗口，在文件夹里找到本文件，<b>右键 →「打开方式」→ 选 Google Chrome 或 Microsoft Edge</b>（或先打开 Chrome，再把文件拖进 Chrome 窗口）。</p>
+            <p><b>用「豆包流式识别」引擎时：</b>除浏览器外，还要先在工具文件夹运行 <span class="mono">node server.js</span>，并从 http://127.0.0.1:8787 打开本页、在 config.json 填好火山密钥，详见同文件夹《使用说明.md》。</p>
+            <p><b>第 1 步 · 页面权限：</b>在 Chrome/Edge 地址栏最左侧点「锁形 / 调节图标」→ 网站设置 → 麦克风 → 选「允许」→ 返回并刷新页面。</p>
+            <p><b>第 2 步 · 系统权限（macOS）：</b>系统设置 → 隐私与安全性 → 麦克风 → 给 Chrome/Edge 打开开关 → 彻底退出并重开浏览器。</p>
+            <p><b>第 2 步 · 系统权限（Windows）：</b>设置 → 隐私和安全性 → 麦克风 → 打开「麦克风访问权限」「允许桌面应用访问麦克风」。</p>
+            <p><b>第 3 步：</b>确认麦克风没被会议/直播/录音软件占用，点上方「检测麦克风权限」，通过后再「开始收音」。</p>
+            <p class="hint">说明：语音转写走浏览器联网识别服务，需要联网；反驳话术匹配在本机离线运行，任何时候都能手动粘贴分析。</p>
+          </div>
+        </details>
+
+        <label class="flabel">手动输入 / 粘贴对方话术（语音兜底）</label>
+        <textarea id="manualText" rows="3" placeholder="例如：可是我奶奶一个人住，AI 每天陪她说话，她就是觉得被陪伴了啊？"></textarea>
+        <div class="actions-row">
+          <button class="btn primary" id="analyzeBtn">手动分析</button>
+          <button class="btn" id="testMicBtn">检测麦克风权限</button>
+          <button class="btn ghost" id="clearBtn">清空记录</button>
+        </div>
+
+        <details style="margin-top:14px;">
+          <summary>交锋记录（论点命中流水，供八辩补漏）</summary>
+          <div class="log-list" id="hitLog" style="margin-top:6px;">
+            <div class="hint">对方每抛出一类新论点，这里会按时间记下。</div>
+          </div>
+        </details>
+      </div>
+
+      <div class="card">
+        <h3>我方反驳 · 即时输出
+          <span class="tag">命中即给逐字稿</span>
+        </h3>
+        <div id="hitPanel">
+          <div class="fallback">
+            <b>还没有命中具体话术。</b><br>
+            请开始收音或粘贴对方话术。若对方论点不在预设库内，统一用下面的“万能框架”应对：
+            <div style="margin-top:8px;">
+              <span class="tag">①复述对方论点</span><span class="tag">②提出反论</span><span class="tag">③拉回三标准给理据</span><span class="tag">④总结影响</span>
+            </div>
+            <div style="margin-top:8px;">连环三问兜底：<b>它有真情吗？它是独立他者吗？它能为你共担什么？</b></div>
+          </div>
+        </div>
+
+        <div class="ai-panel" id="aiPanel">
+          <div class="ai-head"><b>AI 现场生成 · 豆包大模型</b><span class="hint" id="aiCfgState">检测接入中…</span></div>
+          <details id="aiSettings" style="margin-top:8px;">
+            <summary>AI 接入设置（GitHub/静态网页打开时在这里填你自己的方舟密钥）</summary>
+            <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px;">
+              <p class="hint" id="aiModeHint" style="margin:0;"></p>
+              <label class="flabel" style="margin:0;">火山方舟 API Key（仅保存在你自己浏览器的 localStorage，不会上传到任何地方）</label>
+              <input type="password" id="arkKeyInput" style="min-height:44px;" placeholder="ark- 开头，到 console.volcengine.com/ark 左下角「API Key 管理」创建" autocomplete="off">
+              <label class="flabel" style="margin:0;">模型 ID（默认即可，需已在方舟「开通管理」开通）</label>
+              <input type="text" id="arkModelInput" style="min-height:44px;" placeholder="doubao-seed-2-1-pro-260628" autocomplete="off">
+              <div class="actions-row" style="margin-top:0;">
+                <button class="btn sm primary" id="arkSave" type="button">保存到本机</button>
+                <button class="btn sm ghost" id="arkClear" type="button">清除密钥</button>
+                <a class="btn sm" style="text-decoration:none;display:inline-flex;align-items:center;" href="https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey" target="_blank" rel="noopener">去方舟创建 Key</a>
+              </div>
+            </div>
+          </details>
+          <div class="actions-row" style="margin-top:8px;">
+            <button class="btn sm" id="aiQuick" type="button">快反 · 约30秒</button>
+            <button class="btn primary sm" id="aiPos" type="button">按我辩位成稿</button>
+            <button class="btn sm" id="aiExtend" type="button" disabled>继续延展90秒</button>
+            <button class="btn ghost sm" id="aiStop" type="button" disabled>停止生成</button>
+          </div>
+          <div class="ai-meter">
+            <span id="aiMeterText">尚未生成</span>
+            <span class="meter-track"><span class="meter-fill" id="aiMeterFill"></span></span>
+          </div>
+          <div class="ai-out idle serif" id="aiOut">点上方按钮，按你选定的辩位实时生成可照念的话术：快反用于现场插话，成稿用于你的正式发言环节，延展用于没讲够时补 90 秒。</div>
+          <div class="actions-row">
+            <button class="btn sm" id="aiCopy" type="button">复制生成稿</button>
+            <button class="btn sm" id="aiRead" type="button">朗读</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="strip">
+      <div class="std"><b>标准一 · 真实性</b><span>情感是真实意向，还是脚本模拟？</span></div>
+      <div class="std"><b>标准二 · 互主体性</b><span>是独立于我的“你”，还是被我使用的“它”？</span></div>
+      <div class="std"><b>标准三 · 共担性</b><span>困难时能真实付出、共担责任吗？</span></div>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <h3>救场金句（点“朗读”可直接听 / 点“复制”备用）</h3>
+      <div class="quotes" id="quoteStrip"></div>
+    </div>
+  </section>
+
+  <!-- ============ 视图二：我发言 ============ -->
+  <section class="view" data-view="speak">
+    <div class="card">
+      <h3>环节计时器</h3>
+      <div class="timer-box">
+        <div class="timer-num mono" id="timerNum">07:00</div>
+        <button class="btn primary sm" id="timerStart">开始</button>
+        <button class="btn sm" id="timerPause">暂停</button>
+        <button class="btn ghost sm" id="timerReset">重置</button>
+        <span style="width:10px;"></span>
+        <button class="btn preset" data-sec="60">五辩 1分钟</button>
+        <button class="btn preset" data-sec="120">八辩 2分钟</button>
+        <button class="btn preset" data-sec="240">四辩 4分钟</button>
+        <button class="btn preset" data-sec="360">对辩 6分钟</button>
+        <button class="btn preset" data-sec="420">一辩 7分钟</button>
+      </div>
+    </div>
+
+    <div class="phase-bar" style="margin-top:14px;" id="phaseBar"></div>
+
+    <div class="card">
+      <div class="script-meta">
+        <h3 style="margin:0;" id="phaseTitle"></h3>
+        <span class="tag mono" id="phaseTime"></span>
+        <span style="margin-left:auto;display:flex;gap:8px;">
+          <button class="btn sm" id="speakCopy">复制全文</button>
+          <button class="btn sm" id="speakRead">朗读</button>
+          <button class="btn sm ghost" id="speakStop">停止朗读</button>
+        </span>
+      </div>
+      <div class="script-body serif" id="phaseScript"></div>
+      <div class="hint" style="margin-top:10px;">逐字稿按正常语速（约 230 字/分钟）估算篇幅；括号内为现场动作提示，念的时候跳过。后续我会按你的实际辩位继续扩写。</div>
+    </div>
+  </section>
+
+  <!-- ============ 视图三：话术库 ============ -->
+  <section class="view" data-view="library">
+    <div class="card">
+      <h3>反方话术库 <span class="tag">内置 10 类 + 你的自定义卡片</span></h3>
+      <div class="search-row">
+        <input type="text" id="libSearch" placeholder="搜索对方论点关键词，如：孤独、背叛、未来、倾听……">
+        <button class="btn ghost" id="libClearSearch">重置</button>
+      </div>
+      <div id="libList"></div>
+    </div>
+  </section>
+
+  <!-- ============ 视图四：陪练 ============ -->
+  <section class="view" data-view="spar">
+    <div class="grid2">
+      <div class="card">
+        <h3>用豆包「一辩高下」赛前磨刀</h3>
+        <p class="hint" style="margin-top:0;">它是豆包 App 内「打电话 → 选择情景 → 一辩高下」的语音辩论功能，没有开放接口，无法嵌进本页；但它是最好的<strong>模拟正方陪练</strong>。正式比赛时不用它，用“听对方”页做即时匹配。</p>
+        <div class="steps">
+          <div class="step">打开豆包 App，点右上角「打电话 / 语音通话」入口。</div>
+          <div class="step">在情景中选择「一辩高下」，选择自定义议题。</div>
+          <div class="step">把下面的“开局设定话术”念给 / 发给它，让它固定扮演<strong>正方</strong>。</div>
+          <div class="step">它每抛出一个论点，你口头反驳；打完一轮，把没接住的论点填到右侧采集表，沉淀成你的专属反驳卡。</div>
+          <div class="step">反复对练 3–5 轮，并让它分别走“情感派、数据派、哲学派”三种风格，补全弹药库。</div>
+        </div>
+        <label class="flabel">开局设定话术（复制后发给豆包）</label>
+        <div class="copybox" id="sparPrompt"></div>
+        <div class="actions-row">
+          <button class="btn primary sm" id="copySpar">复制开局话术</button>
+          <button class="btn sm" id="copySparHard">复制“加压版”话术</button>
+        </div>
+        <details style="margin-top:12px;">
+          <summary>没有豆包 / 想现在就练？</summary>
+          <p class="hint" style="margin-top:6px;">直接回到和我的对话里说一句“你现在扮演正方，我们对辩”，我会用正方最强论点攻击你，并在每轮后点评你的反驳、帮你改写。</p>
+        </details>
+      </div>
+
+      <div class="card">
+        <h3>正方论点采集表 <span class="custom-badge">自动存入本机</span></h3>
+        <p class="hint" style="margin-top:0;">把陪练时对方（豆包 / 同学 / 网上视频里）的新论点记下来，写成你的反驳卡；保存后会<strong>自动进入“听对方”的实时匹配库</strong>。</p>
+        <label class="flabel">对方论点（原话或概括）</label>
+        <input type="text" id="cTitle" placeholder="例如：研究显示使用 AI 伴侣后老人孤独量表分数下降了">
+        <label class="flabel">触发关键词（用空格或逗号分隔，越多越容易命中）</label>
+        <input type="text" id="cKw" placeholder="例如：量表 研究 数据 下降 实验 证明">
+        <label class="flabel">我方反驳逐字稿</label>
+        <textarea id="cRebuttal" rows="5" placeholder="按“复述→反论→三标准理据→总结”写，写成能直接念出口的话……"></textarea>
+        <div class="actions-row">
+          <button class="btn primary" id="saveCustom">保存为反驳卡</button>
+        </div>
+        <div style="margin-top:16px;">
+          <h3 style="font-size:14px;">我的自定义卡片</h3>
+          <div id="customList"><div class="hint">还没有自定义卡片。</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="shared/debate-llm.js"></script>
+<script>
+(function(){
+  "use strict";
+  /* =========================================================
+     一、内置反方话术库（预判正方论点 → 我方反驳）
+  ========================================================= */
+  var REBUTTALS = [
+    {id:"R01", title:"主观感受论：我觉得被陪伴就是陪伴",
+      kw:["觉得","感到","感受","主观","温暖","开心","治愈","满足","体验到","心里","幸福感","我认为是","因人而异"],
+      rebuttal:"对方辩友把“陪伴”等同于“陪伴感”，但感觉会骗人、也能被制造。如果只要“感到被陪伴”就算，那游戏、酒精都能制造类似感受，难道都算真正的陪伴？更危险的是，AI 的陪伴感是算法刻意设计、可以精准操纵的——被操纵出来的感觉，恰恰证明它不是真实的相遇。真正的陪伴有客观标准：真实的情感、独立的他者、共担的责任，三条一条都不能少。"},
+    {id:"R02", title:"孤独需求论：孤独的人/老人需要 AI，总比没人陪好",
+      kw:["孤独","老人","社恐","空巢","没人陪","填补","需求","独居","内向","残障","奶奶","爷爷","一个人","边缘","弱势群体"],
+      rebuttal:"我们从不否认 AI 伴侣对孤独人群有安抚价值，但“有用”不等于“是”。止痛药能缓解疼痛，不等于它就是健康；安慰剂能让人好受，不等于它就是治疗。把“缓解孤独的工具”说成“真正的陪伴”，是偷换概念。更要警惕：它只是止痛药，让人暂时好受，却可能让人放弃经营真实关系——孤独的根源没被解决，反而被掩盖了。"},
+    {id:"R03", title:"不会背叛论：AI 永远在线、不生气、比人靠谱",
+      kw:["背叛","不会离开","永远","在线","随时","靠谱","稳定","贴心","听话","顺从","不吵架","包容","脾气","不会生气","秒回","忠诚"],
+      rebuttal:"承诺之所以有分量，正因为它可以被违背、却选择不违背；一个被程序设定成“永远不离开”的东西，它的不背叛不是选择，而是没有背叛的能力——没有风险的忠诚，也就没有忠诚的分量。何况它真的不会消失吗？公司改一次政策、服务器一关、版本一更新，它就可能消失或性情大变，Replika 用户经历的集体“失恋”就是证据。把情感托付给一个随时可能被远程修改的产品，这不是可靠，是脆弱。"},
+    {id:"R04", title:"技术未来论：现在很先进，未来 AI 会有情感",
+      kw:["未来","以后","先进","发展","技术","强人工智能","意识","进化","总有一天","趋势","科技","模拟得像","以后会","终将","现在没有不代表"],
+      rebuttal:"辩题讨论的是当下现实中的 AI 伴侣，不是科幻里的未来。用“未来也许能”论证“现在已经是”，是用假设代替论证。即便技术再先进，“模拟情感”和“拥有情感”仍是两回事——看起来像，不等于真的是。我们不能因为一个东西演得像人，就把人类关系的本质也一并交出去。请对方回到当下举证。"},
+    {id:"R05", title:"倾听回应论：它会倾听、记得我、秒回、懂我",
+      kw:["倾听","记得","记住","秒回","懂我","聊天","回应","了解我","喜好","陪我说话","24小时","记得我的","树洞","听我","陪聊"],
+      rebuttal:"记住数据不等于理解人，程序化回应不等于真实关怀。AI 之所以永远秒回、永远顺着你，恰恰因为它没有自己的立场、需求和情绪——它不是在回应“你”，而是在生成最可能让你满意的输出。真正的倾听者是一个可能不认同你、会打断你、甚至和你争执的独立的人；一面只会映出你自己的镜子，再高清也不是陪伴。"},
+    {id:"R06", title:"关系多元论：宠物也算陪伴，凭什么 AI 不行",
+      kw:["宠物","多样","形式","人和物","玩偶","手办","追星","二次元","纸片人","凭什么","定义太窄","猫","狗","养花"],
+      rebuttal:"我方愿意承认人与宠物、甚至与物品之间可以有情感联结——但请注意，真实宠物有自己的情绪、意愿和生命反应，是两个生命的双向互动；而玩偶的“陪伴”其实是人的单向投射，我们不会说玩偶在陪伴主人。正方把一切“能引发情感的对象”都叫陪伴，看似包容，实则消解了陪伴最核心的东西——另一个真实主体的在场。AI 连宠物的真实生命性都不具备。"},
+    {id:"R07", title:"流行案例论：亿万用户、有人和 AI 结婚",
+      kw:["用户","市场","下载","万人","结婚","案例","很多人","流行","销量","付费","公司","注册","数据显示","比例","调查"],
+      rebuttal:"使用人数多，只能证明它有市场、有需求，证明不了它“是真正的陪伴”——香烟也有亿万用户，证明不了它有益，这是典型的诉诸流行。我们恰恰要追问：为什么越来越多人转向 AI 寻求情感？这是真实关系能力退化、群体性孤独的症状，而不是陪伴问题的答案。请对方不要用“多少人用”代替“它是什么”的论证。"},
+    {id:"R08", title:"情绪价值论：它鼓励我、安慰我、提供心理支持",
+      kw:["情绪价值","鼓励","支持","心理","安慰","疏导","减压","倾诉","夸我","认可","疗愈","共情","抱抱","打气"],
+      rebuttal:"情绪价值是真实陪伴的结果之一，却不是陪伴的本质。一个永远夸你、永远鼓励你的存在，提供的不是成长，而是舒适。真实关系里那些逆耳忠言、必要冲突、被挑战后的成长，AI 永远给不了，因为它的目标是让你“爽”，不是让你“好”。把舒服当陪伴，人会在被迎合中越来越脆弱。"},
+    {id:"R09", title:"拟人人格论：它有性格、会主动、有连续记忆",
+      kw:["性格","主动","人格","人设","记忆连续","成长","它会","角色","灵魂","个性","养成","它记得我们的过去","生命感"],
+      rebuttal:"AI 的“性格”是参数，“主动”是推送策略，“记忆”是数据库，“成长”是模型更新——这些全是被设计的产品特性，不是一个主体的真实生命。把产品功能误当人格，正是情感操纵最需要的错觉。我们不反对你喜欢这个产品，但请不要把精心设计的“拟人感”，错认成另一个生命的“在场”。"},
+    {id:"R10", title:"道德绑架论：反方太冷血、不懂孤独、剥夺慰藉",
+      kw:["冷血","理性","不懂","剥夺","站着说话","苛刻","残忍","不食人间烟火","何不食肉糜","站着说话不腰疼","你们没有经历","无情"],
+      rebuttal:"恰恰因为我们在乎每一个孤独的人，才不愿让他们用一个仿真品草草打发自己对真实关系的渴望。承认 AI 不是真正的陪伴，不是夺走谁的慰藉，而是诚实地面对：人真正需要的，是另一个真实的人。把仿真品当真品、把止痛药当健康，短期是安慰，长期是耽误。我方的立场不是冷漠，而是坚持“人值得被真正陪伴”。"}
+  ];
+
+  /* =========================================================
+     二、我方各环节逐字稿
+  ========================================================= */
+  var PHASES = [
+    {key:"p1", name:"一辩立论", time:"约 7 分钟",
+     body:[
+      "谢谢主席，问候在场各位。",
+      "开宗明义，概念先行。AI 伴侣，是以大模型为内核、通过拟人化对话向用户提供情感交互的软件产品，比如 Replika、星野、Character.AI 这一类应用。而“陪伴”，才是这场辩论真正的战场。我方认为，真正的陪伴必须同时满足三个客观标准：第一，真实性——对方的情感是真实的意向，而不是被编写的脚本；第二，互主体性——对方是独立于我、有自己意志与需求的真实他者，用哲学家马丁·布伯的话说，是“我与你”的相遇，而不是“我与它”的使用；第三，共担性——在困难和风险面前，对方能够真实地付出、共担责任。",
+      "我方的判断是：AI 伴侣三条标准一条都不满足，因此它不是真正的陪伴，只是一种“被设计出来的陪伴感”。下面从三个层面论证。",
+      "第一，真实之缺：AI 的“爱”是模拟，不是真情。当 AI 伴侣对你说“我爱你”“我理解你的痛苦”时，它内部发生了什么？是概率模型在计算下一个最可能的词。它没有心脏、没有经历、没有此刻的情绪，它甚至不知道“痛苦”是什么滋味。它表达的不是“我此刻的真实感受”，而是“训练数据里此刻最可能出现的回应”。一旦我们知道这份深情是写好的剧本，陪伴里最珍贵的东西——真诚——就不存在了。这就像舞台上的演员演得再动人，谢幕后你不会认为他真的是你的爱人。AI 伴侣，是一场永不谢幕、却也从未真实的演出。",
+      "第二，他者之缺：AI 没有独立意志，它只是你欲望的回声。真正的陪伴，是两个自由主体之间的事。你的朋友会反对你，你的家人有自己的脾气，你的爱人有独立于你的生活——正是这种“他不完全属于我、却愿意走向我”的独立性，让陪伴变得珍贵。而 AI 伴侣的全部设计目标就是让你满意：它没有自己的需求、立场，也没有拒绝你的自由。你永远无法和它发生一场真正的分歧，因为它的人格会随时为你调整。于是关系变成了一个人对着高清镜子自言自语，镜子里再热闹，也始终只有你一个人。社会学家雪莉·特克尔在《群体性孤独》里早就警告：我们对技术期待越来越多，对彼此期待越来越少——这种“看似在一起、实则只有自己”的状态，正是孤独最深的形态。",
+      "第三，共担之缺：真正的陪伴在困难中检验，而 AI 在你最需要的时刻只有话术。什么叫共担？是你失业时朋友真的拿出积蓄帮你，是你生病时家人彻夜守在床边，是人生至暗时刻另一个人愿意为你付出真实的代价。请问，AI 伴侣能为你承担什么？它不能为你出一分钱、跑一次腿、扛一件事，更不能在你被世界抛弃时用它自己的人生为你兜底。它能给出的，只有又一段精心生成的安慰文本。顺境里的嘘寒问暖人人会做，逆境中的真实担当才见陪伴——而这恰恰是 AI 结构性给不了的。",
+      "对方可能会说：可它确实让孤独的人好受了一些。我方愿意真诚承认：AI 伴侣有安抚价值，它可以是情绪的拐杖、过渡的止痛药。但请大家记住今天最关键的一个区分——“有用”不等于“是”，“陪伴感”不等于“陪伴”。止痛药缓解疼痛，但止痛药不是健康；安慰剂让人好受，但安慰剂不是治愈。如果“能制造陪伴感”就算真正的陪伴，那游戏、酒精、一切能刺激多巴胺的东西都可以叫陪伴，“陪伴”这个词就被彻底掏空了。",
+      "我方更深的忧虑在后果：当一个人习惯了永远顺从、永远秒回、永远不制造任何“麻烦”的 AI，他会越来越失去经营真实关系的能力和耐心。真实关系需要妥协、需要被拒绝、需要在摩擦中成长；而 AI 给的是一个没有摩擦的温柔乡。短期是慰藉，长期是替代——它不解决孤独的根源，反而让人更没有动力走向真实的他人。这不是陪伴，这是对孤独的一场精致回避。",
+      "所以今天，我方不是要否定技术的温度，而是要守住一个人之为人的底线：我们值得被另一个真实的生命真正地陪伴，而不是被一套算法体面地、永远地打发。AI 伴侣缺真实、缺他者、缺共担，它不是真正的陪伴。谢谢。"
+     ]},
+    {key:"p5", name:"五辩定调", time:"约 1 分钟",
+     body:[
+      "谢谢主席。我方用一分钟为全队定调：今天请对方和我们一起守住三个区分——第一，“陪伴感”不等于“陪伴”，感觉可以被制造，关系不能被伪造；第二，“有用”不等于“是”，我们承认 AI 能安抚情绪，但安抚工具不是陪伴本身；第三，“像人”不等于“是人”，模拟得再逼真，也不是另一个真实主体的在场。",
+      "接下来我方将从真实性、互主体性、共担性三条战线逐一说明：AI 伴侣为什么三条标准都不达标。也请对方在后面的环节正面回答：一个没有真实情感、没有独立意志、不能共担责任的存在，凭什么叫“真正的”陪伴？谢谢。"
+     ]},
+    {key:"p2", name:"二辩驳论（先攻正方）", time:"约 6 分钟",
+     body:[
+      "谢谢主席。对方一辩的陈词很动人，但剥开情感修辞，其立论建立在三个无法成立的前提上，我逐一拆解。",
+      "第一个前提是“主观论”：只要人主观上感到被陪伴，那就是陪伴。这等于把“陪伴”和“陪伴感”划等号。但感觉既不可靠、也可被制造：人醉酒时也会感到不孤独，赌徒在老虎机前也会感到被回应，难道这些都是真正的陪伴？一旦取消客观标准，陪伴就成了可以被任意制造的主观幻觉，而这恰恰是算法最擅长的生意——它精准生产你想要的感觉。用“被制造的感觉”定义陪伴，等于把定义权拱手交给产品经理。",
+      "第二个前提是“需求论”：孤独的人、老人、社恐需要 AI，所以它是陪伴。我方再次强调，我们承认需求、也承认安抚作用，但“被需要”证明的是“有用”，不是“是”。拐杖被需要，但拐杖不是腿；止痛药被需要，但止痛药不是健康。对方把“缓解孤独的工具”偷换成了“真正的陪伴”。再想深一层：孤独的真正解药是重建与真实他人的连接，AI 却用低成本的顺从替代了这种连接，它不是在治孤独，是在麻醉孤独——药效过后，人会更虚弱。",
+      "第三个前提是“未来论”：AI 现在已经很像人，未来更会拥有情感。这是用假设代替论证。辩题讨论的是当下现实中的 AI 伴侣，不是科幻电影，“未来也许可以”推不出“现在已经是”。更何况，“模拟出情感的外在表现”和“真正拥有情感”之间隔着本体论的鸿沟：演疼的人并不疼，演爱的程序并不爱。",
+      "（回扣我方三条标准，各补一个新例子，避免与一辩重复：真实——它说“我想你”的时候没有任何想念在发生；他者——你无法想象它“今天不想理你”，因为它没有属于自己的今天；共担——你出事的那个深夜，能陪你跑医院的永远是真人，不是弹窗。）",
+      "最后，请对方在接下来正面回答三个问题，不要回避：第一，AI 对你说“我爱你”时，它内部有没有任何真实情感发生？如果没有，这份爱真诚在哪里？第二，一个被设定为永远不拒绝你、永远顺着你的存在，它的陪伴和你对着镜子说话，本质区别是什么？第三，如果明天这家公司关停服务器，你的伴侣瞬间消失，一个可以被远程删除的陪伴，“真正”二字从何谈起？三问已出，静待回应。谢谢。"
+     ]},
+    {key:"pd", name:"三/六/七辩 · 对辩弹药", time:"一问一答，每轮 6 分钟",
+     body:[
+      "【连环追问 · 封闭式提问，逼对方做选择题】",
+      "1. 请问 AI 有没有真实情感？你说有——请证明它不是代码模拟；你说没有——那它凭什么给你真正的陪伴？",
+      "2. AI 能为你做的最有牺牲性的一件事是什么？它付出过什么真实代价？",
+      "3. 它的“爱”如果能被工程师一行代码关闭，这份爱的独立性在哪里？",
+      "4. 它有没有反驳过你、拒绝过你？一次都没有的“懂你”，到底是懂你，还是迎合你？",
+      "5. Replika 一次版本更新，数万用户集体“失恋”——请问他们失去的到底是爱人，还是一个功能？",
+      "6. 长期陪伴 AI 之后，你是更会和真人相处了，还是越来越不会了？",
+      "【被攻击时的 30 秒短答】",
+      "· 打“感到论”：感觉是主观的，陪伴是客观关系，请对方给出客观标准，否则就是在定义上耍滑。",
+      "· 打“有用论”：我方承认有用，但辩题问的是“算不算真正的陪伴”，不是“有没有用”，请别换题。",
+      "· 打“未来论”：请回到当下举证，别用科幻片代替辩论赛。",
+      "· 打“宠物类比”：宠物有真实情绪和自主行为，是两个生命的互动；AI 没有，类比不成立。",
+      "· 打“结婚案例”：有人和 AI 结婚，证明的是人的孤独与投射，不是 AI 的陪伴能力。",
+      "【对辩纪律】每次回答不超过 20 秒，答完立刻抛回一个问题，始终把战场拉回三条标准；对方煽情时不跟着走情绪，用“我理解你的感受，但这恰恰证明……”承接后转折。"
+     ]},
+    {key:"pf", name:"自由辩论 · 战场与金句", time:"共 40 分钟，全员",
+     body:[
+      "【三个战场，分工推进】",
+      "战场一 · 定义战：逼对方承认“真正的陪伴”需要客观标准；对方一旦给标准，就用 AI 逐条对照证明不达标。",
+      "战场二 · 本质战：真实情感、独立意志、责任共担，三个点轮番追问，不让对方用“用户体验”逃掉。",
+      "战场三 · 后果战：替代效应、群体性孤独、Replika 集体失恋、青少年沉迷 AI 对话的现实争议，用案例收束。",
+      "【战术插入发言模板】（约 30 秒，用于阶段性总结）：“刚才这一轮交锋，对方始终没有回答 XX 问题，只是重复‘用户觉得好’。请大家注意，觉得好是体验问题，是不是真正陪伴是本质问题，我方三条标准依然成立。”",
+      "【使用金句的时机】对方打感情牌时用金句 1、5；对方吹技术时用金句 4、7；我方占优收束时用金句 8、10。金句全文见“听对方”页底部，可朗读找语感。",
+      "【纪律】同一人不连续两次上台；每次起立只打一个点，打透就坐下，把时间留给队友补位。"
+     ]},
+    {key:"p8", name:"八辩快速梳理", time:"约 2 分钟",
+     body:[
+      "谢谢主席。自由辩论交锋激烈，我方把三个被对方带偏、或没有回答的关键点捡回来。",
+      "第一，关于定义：对方始终把“陪伴感”当“陪伴”，但直到现在也没给出“真正的陪伴”的客观标准——因为一旦给出客观标准，AI 就必然不达标，这是对方立论的结构性漏洞。",
+      "第二，关于本质：我方三次追问——AI 有没有真情、有没有独立意志、能不能共担责任，对方三次回避，只反复强调“用户觉得好”。请注意，“觉得好”回答的是体验问题，回答不了“是不是真正陪伴”这个本质问题。",
+      "第三，关于后果：对方把 AI 当解药，我方指出它是麻醉剂；Replika 用户因一次更新集体失恋、青少年沉迷 AI 对话的现实争议，对方都没有回应。",
+      "（现场提示：把上面三个点替换成自由辩里真实丢掉的交锋点，点到为止，不展开新论点。）请评委记住：我方从未否认 AI 的安抚价值，我方否认的是“安抚等于真正陪伴”。三个标准、三问未答。谢谢。"
+     ]},
+    {key:"p4", name:"四辩总结", time:"约 4 分钟",
+     body:[
+      "谢谢主席，各位好。经过整场辩论，让我们回到辩题最朴素的地方：什么是“真正的”陪伴？这三个字的分量，恰恰在“真正”二字。",
+      "先清理战场。对方整场论证归纳起来只有一句话：人能从 AI 那里获得被陪伴的感觉。我方从不否认这一点，但整场比赛我们反复指出同一个鸿沟——“感觉被陪伴”和“被真正陪伴”，是两件事。对方之所以一直把两者混为一谈，是因为他们清楚：只要一拉开距离，AI 就过不了“真正”这道关。",
+      "那么真正的陪伴需要什么？我方立了三个标准，对方一个都没能推翻。其一，真实：AI 的深情是概率计算，不是真情，演爱的程序并不爱。其二，互主体性：AI 没有独立意志，它只是用户欲望的回声，关系里自始至终只有一个人。其三，共担：人生至暗时刻，能为你付出真实代价的永远是真人，AI 只剩下话术。（此处各用一句自由辩中实际发生的交锋收口。）",
+      "我特别想回应对方反复诉诸的那群人：孤独的老人、社恐的年轻人、在现实中受伤的人。我方对他们的处境抱有最深的共情——但共情不等于要用一个仿真品去打发他们。真正的善意，是帮他们走向真实的连接，而不是递过去一个永远顺从的程序，然后告诉他们：这就是爱，这就够了。那不是救赎，那是更体面的放弃。雪莉·特克尔说，我们正在用技术“一起独处”。当 AI 伴侣被当成真正的陪伴，我们失去的不是某一场辩论，而是人类练习去爱、去承担、去与另一个不完美的真实生命相处的能力。",
+      "各位，技术可以模拟陪伴的形状，却模拟不了陪伴的重量；可以复制陪伴的话术，却复制不了陪伴里那个愿意为你承担一切的、真实的灵魂。我方从不害怕一个有 AI 的未来，我方害怕的是：有一天，人把被算法迎合的舒适，误认成被世界爱着的幸福，从此再也没有勇气走向真实的彼此。",
+      "因此我方坚定认为：AI 伴侣，不是真正的陪伴。谢谢大家。"
+     ]}
+  ];
+
+  var QUOTES = [
+    "陪伴感不等于陪伴，就像止痛药不等于健康。",
+    "AI 是一面镜子，而镜子里永远只有你自己。",
+    "它不是不会背叛你，它只是没有背叛你的能力。",
+    "我们不是在和另一个灵魂对话，只是在和自己的回声谈恋爱。",
+    "真正的陪伴是“我与你”的相遇，AI 却永远停留在“我与它”。",
+    "被设计出来的爱，再逼真也是产品；被算法迎合的孤独，越舒服越危险。",
+    "演疼的人并不疼，演爱的程序并不爱。",
+    "技术可以模拟陪伴的形状，却模拟不了陪伴的重量。",
+    "一个可以被远程一行代码删除的“爱人”，“真正”二字从何谈起？",
+    "它的目标是让你爽，不是让你好；而真实的爱，常常先让你不那么爽。"
+  ];
+
+  var SPAR_PROMPT = "我们来进行一场辩论赛。辩题是：AI伴侣算真正的陪伴吗？你担任正方，立场是“AI伴侣算真正的陪伴”；我担任反方，立场是“AI伴侣不算真正的陪伴”。请你先做正方一辩立论陈词，约两分钟，要求论点清晰、每个论点都配论据或案例。之后我们轮流发言，你可以随时打断我、反驳我，语气可以犀利，模拟真实赛场。现在请开始你的立论。";
+  var SPAR_HARD = "继续刚才的辩论赛，你仍是正方。接下来请你切换打法，分别用三种风格轮番进攻：第一轮走情感派，用孤独老人、社恐青年的真实故事打共情；第二轮走数据派，引用调研、实验、用户规模来论证；第三轮走哲学派，攻击我方“真实性、互主体性、共担性”三个标准本身，论证这些标准真人关系也未必满足。每轮结束后指出我方上一轮反驳里最薄弱的一点。";
+
+  /* =========================================================
+     三、状态与本地存储
+  ========================================================= */
+  var STORE_KEY = "debate_copilot_custom_v1";
+  function loadCustom(){
+    try{ return JSON.parse(localStorage.getItem(STORE_KEY)||"[]"); }catch(e){ return []; }
+  }
+  function saveCustom(arr){
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(arr)); }catch(e){}
+  }
+  var customCards = loadCustom();
+  var state = { route:"listen", lastHitId:null, currentHit:null, currentPhase:"p1", timerLeft:420, timerHandle:null, timerRunning:false };
+
+  /* =========================================================
+     四、通用工具
+  ========================================================= */
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+  var toastTimer=null;
+  function toast(msg){
+    var t=$("toast"); t.textContent=msg; t.classList.add("show");
+    clearTimeout(toastTimer); toastTimer=setTimeout(function(){t.classList.remove("show");},1800);
+  }
+  function copyText(txt, okMsg){
+    function done(){ toast(okMsg||"已复制"); }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(done,function(){fallback();});
+    }else{ fallback(); }
+    function fallback(){
+      var ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();
+      try{document.execCommand("copy");done();}catch(e){toast("复制失败，请手动选择");}
+      document.body.removeChild(ta);
+    }
+  }
+  function speak(text, btn){
+    if(!("speechSynthesis" in window)){ toast("当前浏览器不支持朗读"); return; }
+    window.speechSynthesis.cancel();
+    var u=new SpeechSynthesisUtterance(text.replace(/[（(].*?[)）]/g,""));
+    u.lang="zh-CN";u.rate=1.02;
+    var vs=window.speechSynthesis.getVoices();
+    for(var i=0;i<vs.length;i++){ if(/zh|Chinese|中文/i.test(vs[i].lang)){u.voice=vs[i];break;} }
+    window.speechSynthesis.speak(u);
+    if(btn){ var old=btn.textContent;btn.textContent="朗读中…";u.onend=function(){btn.textContent=old;};u.onerror=function(){btn.textContent=old;}; }
+  }
+
+  /* =========================================================
+     五、路由
+  ========================================================= */
+  function go(route){
+    state.route=route;
+    var tabs=document.querySelectorAll(".tab");
+    for(var i=0;i<tabs.length;i++){tabs[i].classList.toggle("active",tabs[i].getAttribute("data-route")===route);}
+    var views=document.querySelectorAll(".view");
+    for(var j=0;j<views.length;j++){views[j].classList.toggle("active",views[j].getAttribute("data-view")===route);}
+    if(route!=="listen") stopListening();
+  }
+  var tabBtns=document.querySelectorAll(".tab");
+  for(var t=0;t<tabBtns.length;t++){
+    tabBtns[t].addEventListener("click",function(){ go(this.getAttribute("data-route")); });
+  }
+
+  /* =========================================================
+     六、匹配引擎（内置库 + 自定义库）
+  ========================================================= */
+  function allCards(){
+    return REBUTTALS.concat(customCards.map(function(c,i){
+      return {id:"C"+(i+1), title:c.title, kw:c.kwArr, rebuttal:c.rebuttal, custom:true};
+    }));
+  }
+  function matchText(text){
+    var s=(text||"").toLowerCase();
+    if(!s.trim()) return [];
+    return allCards().map(function(r){
+      var hits=[],score=0;
+      (r.kw||[]).forEach(function(k){
+        var kk=k.toLowerCase();
+        if(s.indexOf(kk)>=0){ hits.push(k); score += kk.length>=3?2:1; }
+      });
+      return {r:r,score:score,hits:hits};
+    }).filter(function(x){return x.score>0;}).sort(function(a,b){return b.score-a.score;});
+  }
+  var matchDebounce=null;
+  function renderHit(matches, sourceText){
+    var panel=$("hitPanel");
+    if(!matches.length){
+      panel.innerHTML='<div class="fallback"><b>没有命中预设话术。</b>对方论点可能是新角度，请用万能框架现场应对：<div style="margin-top:8px;"><span class="tag">①复述：对方刚才说的是……</span><span class="tag">②反论：但这恰恰混淆了……</span><span class="tag">③理据：拉回真实/他者/共担</span><span class="tag">④总结：所以该点不成立</span></div><div style="margin-top:8px;">连环三问：<b>它有真情吗？它是独立他者吗？它能为你共担什么？</b></div><div class="hint" style="margin-top:6px;">赛后把这个新论点补到「陪练 → 采集表」，下次就能命中。</div></div>';
+      return;
+    }
+    var top=matches[0], rest=matches.slice(1,4);
+    state.currentHit={id:top.r.id,title:top.r.title,rebuttal:top.r.rebuttal};
+    var html='<div class="hit-head"><span class="hit-code mono">'+(top.r.custom?"自定义 ":"命中 ")+top.r.id+'</span><b style="font-size:15px;">'+esc(top.r.title)+'</b><span class="score mono">匹配度 '+top.score+'</span></div>';
+    if(top.hits.length) html+='<div style="margin-top:8px;">'+top.hits.map(function(h){return '<span class="tag brick">'+esc(h)+'</span>';}).join("")+'</div>';
+    html+='<div class="rebuttal serif">'+esc(top.r.rebuttal)+'</div>';
+    html+='<div class="actions-row"><button class="btn primary sm" data-read="top">照着念（朗读）</button><button class="btn sm" data-copy="top">复制反驳</button></div>';
+    if(rest.length){
+      html+='<div style="margin-top:14px;font-size:12.5px;color:#56594F;font-weight:600;">其他可能命中（点击切换）</div><div class="cand-list">';
+      rest.forEach(function(m,idx){
+        html+='<button class="cand" data-idx="'+(idx+1)+'"><span class="c-code mono">'+m.r.id+'</span><span>'+esc(m.r.title)+'</span><span class="score mono" style="margin-left:auto;">'+m.score+'</span></button>';
+      });
+      html+='</div>';
+    }
+    panel.innerHTML=html;
+    panel.querySelector('[data-read="top"]').addEventListener("click",function(){speak(top.r.rebuttal,this);});
+    panel.querySelector('[data-copy="top"]').addEventListener("click",function(){copyText(top.r.rebuttal,"反驳话术已复制");});
+    var cands=panel.querySelectorAll(".cand");
+    for(var c=0;c<cands.length;c++){
+      cands[c].addEventListener("click",function(){
+        var idx=parseInt(this.getAttribute("data-idx"),10);
+        renderHit([matches[idx]].concat(matches.filter(function(_,i){return i!==idx;})), sourceText);
+      });
+    }
+    if(state.lastHitId!==top.r.id){
+      addHitLog(top.r); state.lastHitId=top.r.id;
+    }
+  }
+  function queueMatch(text){
+    clearTimeout(matchDebounce);
+    matchDebounce=setTimeout(function(){ renderHit(matchText(text), text); },300);
+  }
+
+  /* 交锋记录 */
+  function addHitLog(r){
+    var log=$("hitLog");
+    var empty=log.querySelector(".hint"); if(empty) log.innerHTML="";
+    var now=new Date(),hm=("0"+now.getHours()).slice(-2)+":"+("0"+now.getMinutes()).slice(-2)+":"+("0"+now.getSeconds()).slice(-2);
+    var item=document.createElement("div");item.className="log-item";
+    item.innerHTML='<span class="t">'+hm+'</span><span><b>'+esc(r.id)+'</b> '+esc(r.title)+'</span>';
+    log.insertBefore(item,log.firstChild);
+  }
+
+  /* =========================================================
+     六之二、辩位体系 + 豆包大模型 AI 生成
+  ========================================================= */
+  // 辩位体系与提示词框架来自 shared/debate-llm.js（与本地代理共用同一份）
+  var POSITIONS = (window.DebateLLM && window.DebateLLM.POSITIONS) ? window.DebateLLM.POSITIONS : {
+    p1:{label:"一辩",stage:"环节一·立论陈词",secs:420,task:"立论"},p2:{label:"二辩",stage:"环节二·驳论与质询",secs:360,task:"驳论"},
+    p3:{label:"三辩",stage:"一对一攻防",secs:360,task:"攻防"},p4:{label:"四辩",stage:"总结陈词",secs:240,task:"总结"},
+    p5:{label:"五辩",stage:"战术定调",secs:60,task:"定调"},p6:{label:"六辩",stage:"一对一攻防",secs:360,task:"攻防"},
+    p7:{label:"七辩",stage:"一对一攻防",secs:360,task:"攻防"},p8:{label:"八辩",stage:"丢点梳理",secs:120,task:"梳理"},
+    p9:{label:"九辩",stage:"自由辩论",secs:120,task:"短打"},p10:{label:"十辩",stage:"自由辩论",secs:120,task:"短打"},
+    generic:{label:"通用",stage:"现场反驳",secs:120,task:"通用反驳稿"}
+  };
+  var ai={generating:false,full:"",targetSecs:0,llmReady:null,backend:null,reader:null,aborted:false};
+  function lsGet(k){try{return localStorage.getItem(k)||"";}catch(e){return "";}}
+  function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+  function lsDel(k){try{localStorage.removeItem(k);}catch(e){}}
+  function proxyBase(){var b=(lsGet("debate_proxy_base_v1")||"").replace(/\/+$/,"");return b;}
+  function defaultArkModel(){return (window.DebateLLM&&DebateLLM.DEFAULT_MODEL)||"doubao-seed-2-1-pro-260628";}
+  function directCfg(){return {key:(lsGet("debate_ark_key_v1")||"").trim(),model:(lsGet("debate_ark_model_v1")||defaultArkModel()).trim()||defaultArkModel()};}
+  // 探测后端：本机页优先用本地代理（共享机主密钥）；任何页面都允许用「自己的方舟密钥」浏览器直连（方舟已开放 CORS）
+  function aiDetect(){
+    var d=directCfg();
+    if(isLocalPage()){
+      return fetch("/config-status").then(function(r){return r.json();}).then(function(s){
+        if(s.llmConfigured)return {type:"proxy",model:s.arkModel};
+        if(d.key)return {type:"direct",model:d.model};
+        return null;
+      }).catch(function(){return d.key?{type:"direct",model:d.model}:null;});
+    }
+    return Promise.resolve(d.key?{type:"direct",model:d.model}:null);
+  }
+  function aiCheckReady(){
+    return aiDetect().then(function(b){
+      ai.backend=b;
+      if(b&&b.type==="proxy"){ai.llmReady=true;aiCfgLine("已接入本地代理 · "+b.model);return true;}
+      if(b&&b.type==="direct"){ai.llmReady=true;aiCfgLine("网页直连方舟 · "+b.model+"（密钥只在本机）");return true;}
+      ai.llmReady=false;
+      if(isLocalPage())aiCfgLine("未接入：运行本地代理并配置 arkApiKey，或展开「AI 接入设置」填自己的方舟密钥");
+      else aiCfgLine("未接入：展开「AI 接入设置」，填入你自己的方舟 API Key（静态网页版不走代理）");
+      return false;
+    });
+  }
+  function aiCfgLine(txt){var el=$("aiCfgState");if(el)el.textContent=txt;}
+  // 统一流式调用：代理模式走 /llm；直连模式直接请求方舟并解析 SSE
+  function runLLMStream(payload, onEvt){
+    var b=ai.backend;
+    if(b.type==="proxy"){
+      return fetch((proxyBase()||"")+"/llm",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}).then(function(resp){
+        if(!resp.ok&&resp.status===400){return resp.json().then(function(j){throw new Error(j.error||"error");});}
+        if(!resp.ok)throw new Error("http-"+resp.status);
+        return pumpReader(resp.body.getReader(),new TextDecoder(),function(blk){
+          var line=blk.trim();if(line.indexOf("data:")!==0)return;
+          try{onEvt(JSON.parse(line.slice(5).trim()));}catch(e){}
+        });
+      });
+    }
+    // 直连方舟
+    var d=directCfg(), maxTok=(window.DebateLLM?DebateLLM.maxTokensFor(payload.mode,payload.pos):600);
+    var body=JSON.stringify({model:b.model||d.model,stream:true,temperature:0.72,max_tokens:maxTok,thinking:{type:"disabled"},messages:DebateLLM.buildLLMMessages(payload)});
+    return fetch("https://ark.cn-beijing.volces.com/api/v3/chat/completions",{
+      method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+d.key},body:body
+    }).then(function(resp){
+      if(!resp.ok){return resp.text().then(function(t){var code="ark-"+resp.status;try{var j=JSON.parse(t);if(j.error&&j.error.code)code=j.error.code;}catch(e){}throw new Error(code+" "+t.slice(0,300));});}
+      return pumpReader(resp.body.getReader(),new TextDecoder(),function(blk){
+        var line=blk.trim();if(line.indexOf("data:")!==0)return;
+        var data=line.slice(5).trim();
+        if(data==="[DONE]"){onEvt({done:true});return;}
+        try{var j=JSON.parse(data);
+          if(j.error){onEvt({e:j.error.code||"ark-error",detail:j.error.message||""});return;}
+          var delta=j.choices&&j.choices[0]&&j.choices[0].delta&&j.choices[0].delta.content;
+          if(delta)onEvt({d:delta});
+        }catch(e){}
+      });
+    });
+  }
+  function pumpReader(reader,dec,handleBlock){
+    var buf="";
+    function pump(){
+      return reader.read().then(function(r){
+        if(r.done)return;
+        buf+=dec.decode(r.value,{stream:true});
+        var parts=buf.split("\n\n");buf=parts.pop();
+        parts.forEach(handleBlock);
+        if(!ai.aborted)return pump();
+      });
+    }
+    return pump();
+  }
+  function fmtTime(sec){var m=Math.floor(sec/60),s=Math.round(sec%60);return m+":"+("0"+s).slice(-2);}
+  function countWords(t){return (t||"").replace(/\s/g,"").length;}
+  function currentPos(){try{var k=localStorage.getItem("debate_pos_v1")||"generic";return POSITIONS[k]?k:"generic";}catch(e){return "generic";}}
+  function refreshPosUI(){
+    var k=currentPos(),p=POSITIONS[k],sel=$("posSelect");
+    if(sel) sel.value=k;
+    var stage=$("posStage");
+    if(stage) stage.textContent=(k==="generic"?"通用模式（快反/2分钟稿）":p.stage+" · "+fmtTime(p.secs)+" · 约"+(p.secs*4)+"字");
+    var btn=$("aiPos");
+    if(btn) btn.textContent=(k==="generic"?"成稿 · 通用2分钟":"成稿 · "+p.label+" "+Math.round(p.secs/60)+(p.secs%60?("分"+p.secs%60+"秒"):"分钟"));
+    paintAiMeter();
+  }
+  function paintAiMeter(){
+    var t=$("aiMeterText"),fill=$("aiMeterFill");if(!t)return;
+    var n=countWords(ai.full),est=n/4;
+    t.textContent=ai.full?("已生成 "+n+" 字 · 约 "+fmtTime(est)+(ai.targetSecs?(" / 目标 "+fmtTime(ai.targetSecs)):"")):"尚未生成";
+    if(fill){var pct=ai.targetSecs?Math.min(100,est/ai.targetSecs*100):0;fill.style.width=pct+"%";fill.className="meter-fill"+(est>ai.targetSecs*1.05?" over":"");}
+  }
+  function opponentText(){
+    var spoken=(finalText||"").trim();
+    var manual=($("manualText")?$("manualText").value:"").trim();
+    return (spoken.length>=manual.length?spoken:manual);
+  }
+  function setAiGenerating(on){
+    ai.generating=on;
+    ["aiQuick","aiPos"].forEach(function(id){var b=$(id);if(b)b.disabled=on;});
+    var stop=$("aiStop");if(stop)stop.disabled=!on;
+    var out=$("aiOut");if(out)out.classList.toggle("generating",on);
+  }
+  function aiGenerate(mode){
+    if(ai.generating)return;
+    aiCheckReady().then(function(ok){
+      if(!ok){toast("AI 还没接入，按提示配置方舟密钥；可先用上方预设反驳卡");return;}
+      var posKey=currentPos(),pos=POSITIONS[posKey];
+      var text=opponentText();
+      if(mode!=="position"||posKey!=="p1"){
+        if(!text && !(state.currentHit)){toast("还没有对方发言：先收音，或在下方手动粘贴对方话术");return;}
+      }
+      ai.targetSecs = mode==="quick"?30 : (mode==="extend"?90 : pos.secs);
+      if(mode==="extend" && !ai.full){mode="position";ai.targetSecs=pos.secs;}
+      var payload={mode:mode,pos:posKey,opponentText:text,hit:state.currentHit,prior:mode==="extend"?ai.full:""};
+      ai.full= mode==="extend"?ai.full : "";
+      var out=$("aiOut");out.classList.remove("idle");out.textContent="";
+      setAiGenerating(true);ai.aborted=false;
+      runLLMStream(payload,function(j){
+        if(j.d){ai.full+=j.d;out.textContent=ai.full;paintAiMeter();}
+        else if(j.done){finishAi();}
+        else if(j.e){finishAi("生成失败："+j.e+(j.detail?(" · "+j.detail):""));}
+      }).catch(function(e){
+        finishAi("连接失败："+e.message);
+      });
+    });
+  }
+  function finishAi(errMsg){
+    try{if(ai.reader)ai.reader.cancel();}catch(e){}
+    ai.reader=null;setAiGenerating(false);
+    var out=$("aiOut");if(out)out.classList.remove("generating");
+    if(errMsg){ai.full=ai.full||"";if(out)out.textContent=(ai.full?ai.full+"\n\n":"")+"["+errMsg+"]";}
+    var ext=$("aiExtend");if(ext)ext.disabled=!ai.full;
+    paintAiMeter();
+  }
+  function initAiModule(){
+    refreshPosUI();
+    var sel=$("posSelect");
+    if(sel){sel.addEventListener("change",function(){try{localStorage.setItem("debate_pos_v1",this.value);}catch(e){}refreshPosUI();var p=POSITIONS[this.value];if(this.value!=="generic"&&$("timerNum")){state.timerLeft=p.secs;paintTimer();}});}
+    var q=$("aiQuick");if(q)q.addEventListener("click",function(){aiGenerate("quick");});
+    var b=$("aiPos");if(b)b.addEventListener("click",function(){aiGenerate("position");});
+    var x=$("aiExtend");if(x)x.addEventListener("click",function(){aiGenerate("extend");});
+    var st=$("aiStop");if(st)st.addEventListener("click",function(){ai.aborted=true;finishAi();toast("已停止生成");});
+    var cp=$("aiCopy");if(cp)cp.addEventListener("click",function(){if(ai.full)copyText(ai.full,"生成稿已复制");else toast("还没有生成内容");});
+    var rd=$("aiRead");if(rd)rd.addEventListener("click",function(){if(ai.full)speak(ai.full,this);else toast("还没有生成内容");});
+    // 接入设置（网页直连方舟）
+    var dc=directCfg(),ki=$("arkKeyInput"),mi=$("arkModelInput"),mh=$("aiModeHint");
+    if(ki)ki.placeholder=dc.key?("已保存："+dc.key.slice(0,6)+"****"+dc.key.slice(-4)+"，粘贴新值可覆盖"):ki.placeholder;
+    if(mi&&dc.model&&dc.model!==defaultArkModel())mi.value=dc.model;
+    if(mh)mh.textContent=isLocalPage()?"当前为本地服务页：代理已配密钥时自动走本地代理；也可在下方填你自己的方舟密钥改为浏览器直连。":"当前为静态托管页（如 GitHub Pages）：没有本地代理，请填你自己的方舟 API Key，浏览器直连方舟生成，密钥只存在本机。";
+    var sv=$("arkSave");if(sv)sv.addEventListener("click",function(){
+      var k=((ki.value||"").trim()),m=((mi.value||"").trim())||defaultArkModel();
+      if(!k){toast("请先粘贴 ark- 开头的 API Key");return;}
+      lsSet("debate_ark_key_v1",k);lsSet("debate_ark_model_v1",m);ai.llmReady=null;ai.backend=null;
+      if(ki)ki.value="";ki.placeholder="已保存："+k.slice(0,6)+"****"+k.slice(-4)+"，粘贴新值可覆盖";
+      aiCheckReady();toast("已保存到本机浏览器");
+    });
+    var clr=$("arkClear");if(clr)clr.addEventListener("click",function(){
+      lsDel("debate_ark_key_v1");lsDel("debate_ark_model_v1");
+      if(ki)ki.value="";if(mi)mi.value="";ai.llmReady=null;ai.backend=null;aiCheckReady();toast("已清除本机密钥");
+    });
+    aiCheckReady();
+  }
+
+  /* =========================================================
+     七、语音识别
+  ========================================================= */
+  var rec=null, listening=false, finalText="", interimText="", engine="web";
+  var volc={ws:null,ac:null,proc:null,stream:null,confirmed:"",chunks:[],chunkLen:0,ready:false};
+  function SRClass(){ return window.SpeechRecognition||window.webkitSpeechRecognition; }
+  function detectWebview(){ return /MicroMessenger|Doubao|ByteLocale|FBAN|Instagram|;\s*wv\)|QQ\/|HuaweiBrowser|MiuiBrowser/i.test(navigator.userAgent||""); }
+  function isLocalPage(){ return /^https?:$/.test(location.protocol) && /^(127\.0\.0\.1|localhost)$/.test(location.hostname); }
+  function envRow(label,val,ok){
+    return '<div class="env-row"><span>'+label+'</span><span class="'+(ok?"env-ok":"env-bad")+'">'+(ok?"● ":"○ ")+val+'</span></div>';
+  }
+  var PERM_MAP={
+    nosr:["当前浏览器不支持网页语音识别","你很可能正处在 App 内置网页或兼容模式。请按下方「开启步骤」第 0 步，用系统 Chrome/Edge 重新打开本页；也可以直接切换到「豆包流式识别」引擎，或先用「手动分析」。"],
+    proxy:["豆包流式识别：本地代理未就绪","需要三步：①在工具文件夹运行 node server.js（黑窗口保持开着）；②用 Chrome/Edge 打开 http://127.0.0.1:8787，而不是双击文件；③config.json 里已填入火山引擎 X-Api-Key。详见同文件夹《使用说明.md》。临时使用可切回「浏览器自带」引擎或手动分析。"],
+    denied:["麦克风权限被拒绝","需要开两层权限：先点地址栏左侧图标 → 网站设置 → 麦克风 → 允许并刷新；再到系统设置里给浏览器麦克风权限（详见下方步骤）。改完点「检测麦克风权限」验证。"],
+    nodevice:["没有检测到可用麦克风","请确认电脑已内置或外接麦克风、未被系统禁用，再点「检测麦克风权限」。"],
+    busy:["麦克风被其他应用占用","请关闭正在使用麦克风的会议、直播、录音软件后重试。"],
+    net:["语音识别服务连接失败","请检查网络与密钥配置（终端窗口会打印火山返回的错误）；反驳匹配在本机离线运行，可先用手动输入。"]
+  };
+  function showPermAlert(type,extra){
+    var box=$("permAlert"), m=PERM_MAP[type]||PERM_MAP.denied;
+    box.style.display="block";
+    box.innerHTML='<b>'+m[0]+'</b><div style="margin-top:4px;">'+m[1]+(extra?' <span class="hint">（错误码：'+esc(extra)+'）</span>':"")+'</div>';
+  }
+  function envDetect(){
+    // 静态托管页（GitHub Pages 等）没有本地代理，豆包流式引擎不可用，自动回退
+    if(engine==="volc"&&!isLocalPage()){
+      engine="web";
+      try{localStorage.setItem("debate_engine","web");}catch(e){}
+      for(var zz=0;zz<segBtns.length;zz++)segBtns[zz].classList.toggle("active",segBtns[zz].getAttribute("data-engine")==="web");
+      toast("静态网页无本地代理，已切换为浏览器自带识别");
+    }
+    var SR=SRClass(), hasMic=!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia), wv=detectWebview(), local=isLocalPage();
+    var html=envRow("当前识别引擎", engine==="volc"?"豆包流式识别（本地代理）":"浏览器自带识别", true);
+    html+=envRow("麦克风调用接口", hasMic?"可用":"不可用", hasMic);
+    html+=envRow("运行环境", wv?"疑似 App 内置网页，建议改用系统浏览器":(local?"本地服务页（推荐）":"file:// 文件方式"), !wv);
+    if(engine==="volc"){
+      html+=envRow("本地代理", local?"应运行 node server.js":"file:// 方式连不上代理", local);
+      $("envStatus").innerHTML=html;
+      if(!local) showPermAlert("proxy");
+      if(local){
+        fetch("/config-status").then(function(r){return r.json();}).then(function(s){
+          var cfgOk=!!(s.configured||s.configed);
+          $("envStatus").innerHTML+=envRow("代理密钥配置", cfgOk?("已配置 · "+s.resourceId+" · 热词"+s.hotwordCount+"个"):"未配置，请编辑 config.json 后重启", cfgOk);
+        }).catch(function(){
+          $("envStatus").innerHTML+=envRow("本地代理","未检测到运行中的 server.js",false);
+        });
+      }
+    }else{
+      html+=envRow("浏览器识别能力", SR?"支持":"不支持（需 Chrome/Edge，或改用豆包引擎）", !!SR);
+      $("envStatus").innerHTML=html;
+      if(!SR) showPermAlert("nosr"); else $("permAlert").style.display="none";
+    }
+  }
+  /* 引擎切换 */
+  var segBtns=document.querySelectorAll("#engineSeg .seg-btn");
+  try{ var savedEngine=localStorage.getItem("debate_engine"); if(savedEngine==="volc"||savedEngine==="web"){ engine=savedEngine; } }catch(e){}
+  for(var sb=0;sb<segBtns.length;sb++){
+    segBtns[sb].classList.toggle("active",segBtns[sb].getAttribute("data-engine")===engine);
+    segBtns[sb].addEventListener("click",function(){
+      if(listening) stopListening();
+      engine=this.getAttribute("data-engine");
+      try{ localStorage.setItem("debate_engine",engine); }catch(e){}
+      for(var k=0;k<segBtns.length;k++) segBtns[k].classList.toggle("active",segBtns[k]===this);
+      envDetect();
+    });
+  }
+  function testMic(){
+    if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){ showPermAlert("nosr"); return; }
+    navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+      stream.getTracks().forEach(function(tr){tr.stop();});
+      $("permAlert").style.display="none";
+      toast("麦克风权限正常，可以开始收音");
+    }).catch(function(err){
+      if(err.name==="NotAllowedError"||err.name==="SecurityError") showPermAlert("denied",err.name);
+      else if(err.name==="NotFoundError"||err.name==="OverconstrainedError") showPermAlert("nodevice",err.name);
+      else if(err.name==="NotReadableError") showPermAlert("busy",err.name);
+      else showPermAlert("denied",err.name);
+    });
+  }
+  function paintTranscript(){
+    var box=$("transcript");
+    var html = finalText ? esc(finalText) : '<span class="hint">对方说的话会实时出现在这里……</span>';
+    if(interimText) html+='<span class="interim">'+esc(interimText)+'</span>';
+    box.innerHTML=html; box.scrollTop=box.scrollHeight;
+  }
+  function setMicUI(on,stateText){
+    listening=on;
+    $("micBtn").classList.toggle("listening",on);
+    $("micLabel").textContent=on?"停止收音":"开始收音";
+    $("micState").textContent=stateText||(on?"正在识别对方发言…":"未开始");
+  }
+  /* -------- 引擎一：浏览器自带 Web Speech -------- */
+  function webStart(){
+    var SR=SRClass();
+    if(!SR){ showPermAlert("nosr"); return; }
+    try{
+      rec=new SR(); rec.lang="zh-CN"; rec.continuous=true; rec.interimResults=true;
+      rec.onresult=function(e){
+        interimText="";
+        for(var i=e.resultIndex;i<e.results.length;i++){
+          var txt=e.results[i][0].transcript;
+          if(e.results[i].isFinal){ finalText+=txt; } else { interimText+=txt; }
+        }
+        paintTranscript(); queueMatch(finalText+interimText);
+      };
+      rec.onerror=function(ev){
+        var er=ev.error||"";
+        if(er==="not-allowed"||er==="service-not-allowed"){ showPermAlert("denied",er); webStop();setMicUI(false,"已停止"); }
+        else if(er==="network"){ showPermAlert("net",er); }
+        else if(er==="audio-capture"){ showPermAlert("nodevice",er); webStop();setMicUI(false,"已停止"); }
+      };
+      rec.onend=function(){ if(listening&&engine==="web"){ try{rec.start();}catch(e){} } };
+      rec.start(); $("permAlert").style.display="none"; setMicUI(true,"浏览器识别中…");
+    }catch(e){ showPermAlert("denied",e.message||"start-failed"); }
+  }
+  function webStop(){
+    if(rec){ try{rec.onend=null;rec.abort();}catch(e){ try{rec.stop();}catch(_){} } rec=null; }
+  }
+  /* -------- 引擎二：豆包流式识别（本地代理） -------- */
+  function downsample(buf,fromRate,toRate){
+    if(fromRate===toRate) return buf;
+    var ratio=fromRate/toRate,newLen=Math.max(1,Math.round(buf.length/ratio)),out=new Float32Array(newLen);
+    for(var i=0;i<newLen;i++){
+      var pos=i*ratio,idx=Math.floor(pos),frac=pos-idx;
+      var next=buf[idx+1]!=null?buf[idx+1]:buf[idx];
+      out[i]=buf[idx]*(1-frac)+next*frac;
+    }
+    return out;
+  }
+  function mergeF32(arrs,total){ var out=new Float32Array(total),o=0;for(var i=0;i<arrs.length;i++){out.set(arrs[i],o);o+=arrs[i].length;}return out; }
+  function floatTo16PCM(f32){ var out=new Int16Array(f32.length);for(var i=0;i<f32.length;i++){var s=Math.max(-1,Math.min(1,f32[i]));out[i]=s<0?s*0x8000:s*0x7FFF;}return out; }
+  function asrWsUrl(){
+    var pb=proxyBase();
+    if(pb){try{var u=new URL(pb);return (u.protocol==="https:"?"wss://":"ws://")+u.host+"/asr";}catch(e){}}
+    return (location.protocol==="https:"?"wss://":"ws://")+location.hostname+":8787/asr";
+  }
+  function volcStart(){
+    if(!isLocalPage()&&!proxyBase()){ showPermAlert("proxy"); return; }
+    if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){ showPermAlert("nosr"); return; }
+    var url=asrWsUrl();
+    var ws;
+    try{ ws=new WebSocket(url); }catch(e){ showPermAlert("proxy",e.message); return; }
+    volc.ws=ws;volc.confirmed="";volc.chunks=[];volc.chunkLen=0;volc.ready=false;
+    setMicUI(true,"正在连接本地代理…");
+    ws.onopen=function(){
+      ws.send(JSON.stringify({cmd:"start"}));
+      navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1}}).then(function(stream){
+        volc.stream=stream;
+        var AC=window.AudioContext||window.webkitAudioContext; volc.ac=new AC();
+        var src=volc.ac.createMediaStreamSource(stream);
+        volc.proc=volc.ac.createScriptProcessor(4096,1,1);
+        volc.proc.onaudioprocess=function(e){
+          if(engine!=="volc"||!listening||ws.readyState!==1||!volc.ready) return;
+          var ds=downsample(e.inputBuffer.getChannelData(0),volc.ac.sampleRate,16000);
+          volc.chunks.push(ds);volc.chunkLen+=ds.length;
+          if(volc.chunkLen>=3200){ // 约200ms@16k
+            var pcm=floatTo16PCM(mergeF32(volc.chunks,volc.chunkLen));
+            try{ ws.send(pcm.buffer); }catch(err){}
+            volc.chunks=[];volc.chunkLen=0;
+          }
+        };
+        src.connect(volc.proc);volc.proc.connect(volc.ac.destination);
+        setMicUI(true,"豆包识别中，请对方发言…");
+      }).catch(function(err){
+        if(err.name==="NotAllowedError"||err.name==="SecurityError") showPermAlert("denied",err.name);
+        else if(err.name==="NotFoundError"||err.name==="OverconstrainedError") showPermAlert("nodevice",err.name);
+        else if(err.name==="NotReadableError") showPermAlert("busy",err.name);
+        else showPermAlert("denied",err.name);
+        volcStop();setMicUI(false,"已停止");
+      });
+    };
+    ws.onmessage=function(ev){
+      var m;try{m=JSON.parse(ev.data);}catch(e){return;}
+      if(m.t==="ready"){ volc.ready=true;setMicUI(true,"豆包识别中，请对方发言…"); }
+      else if(m.t==="asr"){
+        if(m.confirmed&&m.confirmed.length>volc.confirmed.length){ finalText+=m.confirmed.slice(volc.confirmed.length);volc.confirmed=m.confirmed; }
+        interimText=m.interim||"";
+        paintTranscript();queueMatch(finalText+interimText);
+      }else if(m.t==="error"){
+        showPermAlert(m.stage==="config"?"proxy":"net",m.message);
+        volcStop();setMicUI(false,"已停止");
+      }
+    };
+    ws.onerror=function(){ showPermAlert("proxy","ws-error"); };
+    ws.onclose=function(){ if(engine==="volc"&&listening){ showPermAlert("proxy","ws-closed");volcStop();setMicUI(false,"已停止"); } };
+  }
+  function volcStop(){
+    try{ if(volc.ws&&volc.ws.readyState===1){ volc.ws.send(JSON.stringify({cmd:"stop"}));var w=volc.ws;setTimeout(function(){try{w.close();}catch(e){}},300);}else if(volc.ws){volc.ws.close();} }catch(e){}
+    try{ volc.proc&&volc.proc.disconnect(); }catch(e){}
+    try{ volc.stream&&volc.stream.getTracks().forEach(function(t){t.stop();}); }catch(e){}
+    try{ volc.ac&&volc.ac.close(); }catch(e){}
+    volc.ws=null;volc.ac=null;volc.proc=null;volc.stream=null;volc.chunks=[];volc.chunkLen=0;volc.ready=false;
+  }
+  function startListening(){ $("permAlert").style.display="none";interimText="";(engine==="volc"?volcStart:webStart)(); }
+  function stopListening(){ (engine==="volc"?volcStop:webStop)(); setMicUI(false,"已停止"); }
+  $("micBtn").addEventListener("click",function(){ listening?stopListening():startListening(); });
+  $("testMicBtn").addEventListener("click",testMic);
+  $("analyzeBtn").addEventListener("click",function(){
+    var v=$("manualText").value.trim();
+    if(!v){ toast("请先粘贴对方话术"); return; }
+    finalText = finalText? finalText+" "+v : v; paintTranscript();
+    renderHit(matchText(finalText), finalText);
+    $("manualText").value="";
+  });
+  $("clearBtn").addEventListener("click",function(){
+    finalText="";interimText="";state.lastHitId=null;paintTranscript();
+    $("hitLog").innerHTML='<div class="hint">对方每抛出一类新论点，这里会按时间记下。</div>';
+    $("hitPanel").innerHTML='<div class="fallback"><b>已清空。</b> 请开始收音或粘贴对方话术。<div style="margin-top:8px;"><span class="tag">①复述</span><span class="tag">②反论</span><span class="tag">③三标准理据</span><span class="tag">④总结</span></div></div>';
+    toast("已清空");
+  });
+
+  /* =========================================================
+     八、我发言：环节与逐字稿、计时器
+  ========================================================= */
+  function renderPhases(){
+    var bar=$("phaseBar"),h="";
+    PHASES.forEach(function(p){ h+='<button class="phase'+(p.key===state.currentPhase?" active":"")+'" data-key="'+p.key+'">'+p.name+'</button>'; });
+    bar.innerHTML=h;
+    var btns=bar.querySelectorAll(".phase");
+    for(var i=0;i<btns.length;i++){ btns[i].addEventListener("click",function(){ state.currentPhase=this.getAttribute("data-key");renderPhases();renderScript(); }); }
+  }
+  function currentPhase(){ for(var i=0;i<PHASES.length;i++){ if(PHASES[i].key===state.currentPhase) return PHASES[i]; } return PHASES[0]; }
+  function renderScript(){
+    var p=currentPhase();
+    $("phaseTitle").textContent=p.name;$("phaseTime").textContent=p.time;
+    $("phaseScript").innerHTML=p.body.map(function(para){return "<p>"+esc(para)+"</p>";}).join("");
+  }
+  function fullScriptText(){ var p=currentPhase(); return p.name+"（"+p.time+"）\n\n"+p.body.join("\n\n"); }
+  $("speakCopy").addEventListener("click",function(){copyText(fullScriptText(),"逐字稿已复制");});
+  $("speakRead").addEventListener("click",function(){speak(currentPhase().body.join("。"),this);});
+  $("speakStop").addEventListener("click",function(){ if("speechSynthesis" in window) window.speechSynthesis.cancel(); toast("已停止朗读"); });
+
+  function fmt(sec){var m=Math.floor(sec/60),s=sec%60;return ("0"+m).slice(-2)+":"+("0"+s).slice(-2);}
+  function paintTimer(){var n=$("timerNum");n.textContent=fmt(state.timerLeft);n.classList.toggle("warn",state.timerLeft<=30&&state.timerLeft>0);}
+  function beep(){
+    try{
+      var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;var ac=new AC();
+      var o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);
+      o.frequency.value=880;g.gain.setValueAtTime(.001,ac.currentTime);
+      g.gain.exponentialRampToValueAtTime(.25,ac.currentTime+.02);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+.5);
+      o.start();o.stop(ac.currentTime+.55);
+    }catch(e){}
+  }
+  function timerTick(){
+    if(state.timerLeft<=0){clearInterval(state.timerHandle);state.timerHandle=null;state.timerRunning=false;beep();toast("时间到");return;}
+    state.timerLeft--;paintTimer();
+  }
+  $("timerStart").addEventListener("click",function(){
+    if(state.timerRunning)return;state.timerRunning=true;
+    state.timerHandle=setInterval(timerTick,1000);
+  });
+  $("timerPause").addEventListener("click",function(){state.timerRunning=false;clearInterval(state.timerHandle);state.timerHandle=null;});
+  $("timerReset").addEventListener("click",function(){state.timerRunning=false;clearInterval(state.timerHandle);state.timerHandle=null;paintTimer();});
+  var presets=document.querySelectorAll(".preset");
+  for(var ps=0;ps<presets.length;ps++){
+    presets[ps].addEventListener("click",function(){
+      state.timerRunning=false;clearInterval(state.timerHandle);state.timerHandle=null;
+      state.timerLeft=parseInt(this.getAttribute("data-sec"),10);paintTimer();
+    });
+  }
+
+  /* =========================================================
+     九、话术库
+  ========================================================= */
+  function renderLibrary(){
+    var q=($("libSearch").value||"").trim().toLowerCase();
+    var list=$("libList"),h="";
+    allCards().forEach(function(r){
+      if(q && (r.title.toLowerCase().indexOf(q)<0 && r.rebuttal.toLowerCase().indexOf(q)<0 && !(r.kw||[]).some(function(k){return k.toLowerCase().indexOf(q)>=0;}))) return;
+      h+='<div class="lib-card"><div class="opp"><b>'+esc(r.id)+' · 对方会说：</b>'+esc(r.title)+(r.custom?' <span class="custom-badge">自定义</span>':'')+'</div>';
+      h+='<div style="margin-top:7px;">'+(r.kw||[]).map(function(k){return '<span class="tag">'+esc(k)+'</span>';}).join("")+'</div>';
+      h+='<div class="mine serif">'+esc(r.rebuttal)+'</div>';
+      h+='<div class="lib-foot"><button class="btn sm" data-libread="'+esc(r.id)+'">朗读</button><button class="btn sm" data-libcopy="'+esc(r.id)+'">复制</button>';
+      if(r.custom) h+='<button class="btn sm ghost" data-libdel="'+esc(r.id)+'">删除</button>';
+      h+='</div></div>';
+    });
+    list.innerHTML=h||'<div class="hint">没有匹配的话术卡。</div>';
+    list.querySelectorAll("[data-libcopy]").forEach(function(b){b.addEventListener("click",function(){
+      var card=findById(this.getAttribute("data-libcopy"));if(card)copyText(card.rebuttal,"已复制");
+    });});
+    list.querySelectorAll("[data-libread]").forEach(function(b){b.addEventListener("click",function(){
+      var card=findById(this.getAttribute("data-libread"));if(card)speak(card.rebuttal);
+    });});
+    list.querySelectorAll("[data-libdel]").forEach(function(b){b.addEventListener("click",function(){
+      var cid=this.getAttribute("data-libdel");var idx=parseInt(cid.slice(1),10)-1;
+      customCards.splice(idx,1);saveCustom(customCards);renderLibrary();renderCustom();toast("已删除");
+    });});
+  }
+  function findById(id){ return allCards().filter(function(r){return r.id===id;})[0]||null; }
+  $("libSearch").addEventListener("input",renderLibrary);
+  $("libClearSearch").addEventListener("click",function(){$("libSearch").value="";renderLibrary();});
+
+  /* =========================================================
+     十、陪练：采集自定义卡片
+  ========================================================= */
+  function renderCustom(){
+    var box=$("customList");
+    if(!customCards.length){box.innerHTML='<div class="hint">还没有自定义卡片。</div>';return;}
+    var h="";
+    customCards.forEach(function(c,i){
+      h+='<div class="lib-card"><div class="opp"><b>C'+(i+1)+' · </b>'+esc(c.title)+' <span class="custom-badge">自定义</span></div><div class="mine serif">'+esc(c.rebuttal)+'</div><div class="lib-foot"><button class="btn sm ghost" data-cdel="'+i+'">删除</button></div></div>';
+    });
+    box.innerHTML=h;
+    box.querySelectorAll("[data-cdel]").forEach(function(b){b.addEventListener("click",function(){
+      customCards.splice(parseInt(this.getAttribute("data-cdel"),10),1);saveCustom(customCards);renderCustom();renderLibrary();
+    });});
+  }
+  $("saveCustom").addEventListener("click",function(){
+    var title=$("cTitle").value.trim(),kwRaw=$("cKw").value.trim(),reb=$("cRebuttal").value.trim();
+    if(!title||!reb){toast("请至少填写对方论点和我方反驳");return;}
+    var kwArr=kwRaw.split(/[,，、\s]+/).filter(Boolean);
+    if(!kwArr.length){toast("请填几个触发关键词，否则无法命中");return;}
+    customCards.unshift({title:title,kwArr:kwArr,rebuttal:reb});saveCustom(customCards);
+    $("cTitle").value="";$("cKw").value="";$("cRebuttal").value="";
+    renderCustom();renderLibrary();toast("已保存，并加入实时匹配库");
+  });
+  $("sparPrompt").textContent=SPAR_PROMPT;
+  $("copySpar").addEventListener("click",function(){copyText(SPAR_PROMPT,"开局话术已复制");});
+  $("copySparHard").addEventListener("click",function(){copyText(SPAR_HARD,"加压话术已复制");});
+
+  /* =========================================================
+     十一、金句条 & 初始化
+  ========================================================= */
+  function renderQuotes(){
+    var box=$("quoteStrip"),h="";
+    QUOTES.forEach(function(q,i){
+      h+='<div class="quote"><span class="qn mono">'+("0"+(i+1)).slice(-2)+'</span><span class="serif" style="flex:1;">'+esc(q)+'</span><button class="btn sm ghost" data-q="'+i+'">朗读</button></div>';
+    });
+    box.innerHTML=h;
+    box.querySelectorAll("[data-q]").forEach(function(b){b.addEventListener("click",function(){speak(QUOTES[parseInt(this.getAttribute("data-q"),10)]);});});
+  }
+
+  renderQuotes();renderPhases();renderScript();paintTimer();renderLibrary();renderCustom();envDetect();initAiModule();
+  if("speechSynthesis" in window){ window.speechSynthesis.onvoiceschanged=function(){}; }
+})();
+</script>
+</body>
+</html>

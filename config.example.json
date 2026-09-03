@@ -1,0 +1,28 @@
+{
+  "port": 8787,
+  "engine": "seedasr2",
+  "endpoint": "bigmodel_async",
+  "resourceId": "volc.seedasr.sauc.duration",
+  "apiKey": "",
+  "arkApiKey": "",
+  "arkModel": "doubao-seed-2-1-pro-260628",
+  "appKey": "",
+  "accessKey": "",
+  "hotwords": [
+    "互主体性",
+    "共担性",
+    "真实性",
+    "陪伴感",
+    "群体性孤独",
+    "特克尔",
+    "马丁布伯",
+    "Replika",
+    "Character.AI",
+    "正方",
+    "反方",
+    "立论",
+    "驳论",
+    "对辩",
+    "自由辩"
+  ]
+}
