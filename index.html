@@ -240,6 +240,17 @@
           <button class="seg-btn" data-engine="volc" type="button">豆包流式识别 · 本地代理</button>
         </div>
         <div id="envStatus" class="env-box" style="margin-top:10px;"></div>
+        <details style="margin-top:8px;">
+          <summary>高级：在线页也想用「豆包流式识别」？连接自建代理</summary>
+          <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px;">
+            <p class="hint" style="margin:0;">豆包识别需经过 server.js 代理（二进制协议+密钥保护）。把你自己运行的代理经 HTTPS 隧道（如 cloudflared）暴露成公网地址填到这里，在线页即可使用豆包识别与代理侧 AI；留空则为纯静态模式。地址形如 https://xxx.trycloudflare.com，只存在本机。</p>
+            <input type="text" id="proxyBaseInput" style="min-height:44px;" placeholder="https://你的代理公网地址（不需要请留空）" autocomplete="off">
+            <div class="actions-row" style="margin-top:0;">
+              <button class="btn sm primary" id="proxySave" type="button">保存并重测</button>
+              <button class="btn sm ghost" id="proxyClear" type="button">清除</button>
+            </div>
+          </div>
+        </details>
         <div class="mic-row" style="margin-top:12px;">
           <button class="mic-btn" id="micBtn"><span class="dot"></span><span id="micLabel">开始收音</span></button>
           <div>
@@ -722,8 +733,8 @@
   // 探测后端：本机页优先用本地代理（共享机主密钥）；任何页面都允许用「自己的方舟密钥」浏览器直连（方舟已开放 CORS）
   function aiDetect(){
     var d=directCfg();
-    if(isLocalPage()){
-      return fetch("/config-status").then(function(r){return r.json();}).then(function(s){
+    if(isLocalPage()||proxyBase()){
+      return fetch((proxyBase()||"")+"/config-status").then(function(r){return r.json();}).then(function(s){
         if(s.llmConfigured)return {type:"proxy",model:s.arkModel};
         if(d.key)return {type:"direct",model:d.model};
         return null;
@@ -904,7 +915,7 @@
   }
   function envDetect(){
     // 静态托管页（GitHub Pages 等）没有本地代理，豆包流式引擎不可用，自动回退
-    if(engine==="volc"&&!isLocalPage()){
+    if(engine==="volc"&&!isLocalPage()&&!proxyBase()){
       engine="web";
       try{localStorage.setItem("debate_engine","web");}catch(e){}
       for(var zz=0;zz<segBtns.length;zz++)segBtns[zz].classList.toggle("active",segBtns[zz].getAttribute("data-engine")==="web");
@@ -913,17 +924,19 @@
     var SR=SRClass(), hasMic=!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia), wv=detectWebview(), local=isLocalPage();
     var html=envRow("当前识别引擎", engine==="volc"?"豆包流式识别（本地代理）":"浏览器自带识别", true);
     html+=envRow("麦克风调用接口", hasMic?"可用":"不可用", hasMic);
-    html+=envRow("运行环境", wv?"疑似 App 内置网页，建议改用系统浏览器":(local?"本地服务页（推荐）":"file:// 文件方式"), !wv);
+    var envLabel=wv?"疑似 App 内置网页，建议改用系统浏览器":(local?"本地服务页（推荐）":(location.protocol==="file:"?"file:// 文件方式（请改用本地服务或在线网址）":"静态托管页（GitHub Pages 等）"));
+    html+=envRow("运行环境", envLabel, !wv);
     if(engine==="volc"){
-      html+=envRow("本地代理", local?"应运行 node server.js":"file:// 方式连不上代理", local);
+      var proxyOk=local||!!proxyBase();
+      html+=envRow("代理连接", proxyOk?(local?"本机 server.js（127.0.0.1:8787）":"自建代理 "+proxyBase()):"未配置：本地页需运行 server.js，在线页请在下方「高级」填代理地址", proxyOk);
       $("envStatus").innerHTML=html;
-      if(!local) showPermAlert("proxy");
-      if(local){
-        fetch("/config-status").then(function(r){return r.json();}).then(function(s){
+      if(!proxyOk) showPermAlert("proxy");
+      if(proxyOk){
+        fetch((proxyBase()||"")+"/config-status").then(function(r){return r.json();}).then(function(s){
           var cfgOk=!!(s.configured||s.configed);
-          $("envStatus").innerHTML+=envRow("代理密钥配置", cfgOk?("已配置 · "+s.resourceId+" · 热词"+s.hotwordCount+"个"):"未配置，请编辑 config.json 后重启", cfgOk);
+          $("envStatus").innerHTML+=envRow("代理密钥配置", cfgOk?("已配置 · "+s.resourceId+" · 热词"+s.hotwordCount+"个"):"未配置，请编辑代理端 config.json 后重启", cfgOk);
         }).catch(function(){
-          $("envStatus").innerHTML+=envRow("本地代理","未检测到运行中的 server.js",false);
+          $("envStatus").innerHTML+=envRow("代理连接","连不上代理：确认 server.js 已启动、隧道地址正确（必须 https）",false);
         });
       }
     }else{
@@ -945,6 +958,18 @@
       envDetect();
     });
   }
+  // 自建代理地址（在线页连本机/云端 server.js，启用豆包识别）
+  (function(){
+    var pi=$("proxyBaseInput"),ps=$("proxySave"),pc=$("proxyClear"),pb=proxyBase();
+    if(pi&&pb)pi.value=pb;
+    if(ps)ps.addEventListener("click",function(){
+      var v=((pi.value||"").trim()).replace(/\/+$/,"");
+      if(v&&!/^https:\/\/.+/.test(v)){toast("在线页是 https，代理地址也必须是 https（wss），请用 HTTPS 隧道");return;}
+      if(v)lsSet("debate_proxy_base_v1",v);else lsDel("debate_proxy_base_v1");
+      ai.backend=null;ai.llmReady=null;envDetect();aiCheckReady();toast(v?("已保存代理："+v):"已清除代理地址");
+    });
+    if(pc)pc.addEventListener("click",function(){lsDel("debate_proxy_base_v1");if(pi)pi.value="";ai.backend=null;ai.llmReady=null;envDetect();aiCheckReady();toast("已清除代理地址");});
+  })();
   function testMic(){
     if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){ showPermAlert("nosr"); return; }
     navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){

@@ -271,6 +271,11 @@ function buildLLMMessages(p) { return DebateLLM.buildLLMMessages(p); }
 /* ---------------- 静态文件服务 ---------------- */
 const MIME = { '.html': 'text/html;charset=utf-8', '.js': 'text/javascript;charset=utf-8', '.json': 'application/json;charset=utf-8', '.md': 'text/markdown;charset=utf-8' };
 const server = http.createServer(function (req, res) {
+  // 允许 GitHub Pages 等静态页跨源连接自建代理（隧道/局域网部署）
+  res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
   const urlPath = req.url.split('?')[0];
   if (urlPath === '/config-status') {
     const cfg = readConfig();
