@@ -733,7 +733,7 @@
   // 探测后端：本机页优先用本地代理（共享机主密钥）；任何页面都允许用「自己的方舟密钥」浏览器直连（方舟已开放 CORS）
   function aiDetect(){
     var d=directCfg();
-    if(isLocalPage()||proxyBase()){
+    if(isProxyHosted()||proxyBase()){
       return fetch((proxyBase()||"")+"/config-status").then(function(r){return r.json();}).then(function(s){
         if(s.llmConfigured)return {type:"proxy",model:s.arkModel};
         if(d.key)return {type:"direct",model:d.model};
@@ -745,10 +745,10 @@
   function aiCheckReady(){
     return aiDetect().then(function(b){
       ai.backend=b;
-      if(b&&b.type==="proxy"){ai.llmReady=true;aiCfgLine("已接入本地代理 · "+b.model);return true;}
-      if(b&&b.type==="direct"){ai.llmReady=true;aiCfgLine("网页直连方舟 · "+b.model+"（密钥只在本机）");return true;}
+      if(b&&b.type==="proxy"){ai.llmReady=true;aiCfgLine("已接入本地/局域网代理 · "+b.model);return true;}
+      if(b&&b.type==="direct"){ai.llmReady=true;aiCfgLine("浏览器直连方舟 · "+b.model+(isProxyHosted()?"":"（密钥只在本机）"));return true;}
       ai.llmReady=false;
-      if(isLocalPage())aiCfgLine("未接入：运行本地代理并配置 arkApiKey，或展开「AI 接入设置」填自己的方舟密钥");
+      if(isProxyHosted())aiCfgLine("未接入：代理端未配置 arkApiKey，或展开「AI 接入设置」填自己的方舟密钥");
       else aiCfgLine("未接入：展开「AI 接入设置」，填入你自己的方舟 API Key（静态网页版不走代理）");
       return false;
     });
@@ -874,7 +874,7 @@
     var dc=directCfg(),ki=$("arkKeyInput"),mi=$("arkModelInput"),mh=$("aiModeHint");
     if(ki)ki.placeholder=dc.key?("已保存："+dc.key.slice(0,6)+"****"+dc.key.slice(-4)+"，粘贴新值可覆盖"):ki.placeholder;
     if(mi&&dc.model&&dc.model!==defaultArkModel())mi.value=dc.model;
-    if(mh)mh.textContent=isLocalPage()?"当前为本地服务页：代理已配密钥时自动走本地代理；也可在下方填你自己的方舟密钥改为浏览器直连。":"当前为静态托管页（如 GitHub Pages）：没有本地代理，请填你自己的方舟 API Key，浏览器直连方舟生成，密钥只存在本机。";
+    if(mh)mh.textContent=isProxyHosted()?"当前由本地/局域网代理提供服务：自动使用代理侧密钥；也可在下方填你自己的方舟密钥改为浏览器直连。":"当前为静态托管页（如 GitHub Pages）：没有本地代理，请填你自己的方舟 API Key，浏览器直连方舟生成，密钥只存在本机。";
     var sv=$("arkSave");if(sv)sv.addEventListener("click",function(){
       var k=((ki.value||"").trim()),m=((mi.value||"").trim())||defaultArkModel();
       if(!k){toast("请先粘贴 ark- 开头的 API Key");return;}
@@ -897,6 +897,9 @@
   function SRClass(){ return window.SpeechRecognition||window.webkitSpeechRecognition; }
   function detectWebview(){ return /MicroMessenger|Doubao|ByteLocale|FBAN|Instagram|;\s*wv\)|QQ\/|HuaweiBrowser|MiuiBrowser/i.test(navigator.userAgent||""); }
   function isLocalPage(){ return /^https?:$/.test(location.protocol) && /^(127\.0\.0\.1|localhost)$/.test(location.hostname); }
+  function isLanHost(h){ return /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.|169\.254\.)/.test(h) || /\.local$/.test(h); }
+  // 由本机/局域网代理（server.js）提供服务的页面：同源即可用代理能力（豆包识别+代理侧AI）
+  function isProxyHosted(){ return isLocalPage() || (isLanHost(location.hostname)); }
   function envRow(label,val,ok){
     return '<div class="env-row"><span>'+label+'</span><span class="'+(ok?"env-ok":"env-bad")+'">'+(ok?"● ":"○ ")+val+'</span></div>';
   }
@@ -915,7 +918,7 @@
   }
   function envDetect(){
     // 静态托管页（GitHub Pages 等）没有本地代理，豆包流式引擎不可用，自动回退
-    if(engine==="volc"&&!isLocalPage()&&!proxyBase()){
+    if(engine==="volc"&&!isProxyHosted()&&!proxyBase()){
       engine="web";
       try{localStorage.setItem("debate_engine","web");}catch(e){}
       for(var zz=0;zz<segBtns.length;zz++)segBtns[zz].classList.toggle("active",segBtns[zz].getAttribute("data-engine")==="web");
@@ -927,8 +930,8 @@
     var envLabel=wv?"疑似 App 内置网页，建议改用系统浏览器":(local?"本地服务页（推荐）":(location.protocol==="file:"?"file:// 文件方式（请改用本地服务或在线网址）":"静态托管页（GitHub Pages 等）"));
     html+=envRow("运行环境", envLabel, !wv);
     if(engine==="volc"){
-      var proxyOk=local||!!proxyBase();
-      html+=envRow("代理连接", proxyOk?(local?"本机 server.js（127.0.0.1:8787）":"自建代理 "+proxyBase()):"未配置：本地页需运行 server.js，在线页请在下方「高级」填代理地址", proxyOk);
+      var proxyOk=isProxyHosted()||!!proxyBase();
+      html+=envRow("代理连接", proxyOk?(isLocalPage()?"本机 server.js（127.0.0.1:8787）":"同源代理 "+location.host):"未配置：本地页需运行 server.js，在线页请在下方「高级」填代理地址", proxyOk);
       $("envStatus").innerHTML=html;
       if(!proxyOk) showPermAlert("proxy");
       if(proxyOk){
@@ -1038,10 +1041,11 @@
   function asrWsUrl(){
     var pb=proxyBase();
     if(pb){try{var u=new URL(pb);return (u.protocol==="https:"?"wss://":"ws://")+u.host+"/asr";}catch(e){}}
+    if(isProxyHosted())return (location.protocol==="https:"?"wss://":"ws://")+location.host+"/asr";
     return (location.protocol==="https:"?"wss://":"ws://")+location.hostname+":8787/asr";
   }
   function volcStart(){
-    if(!isLocalPage()&&!proxyBase()){ showPermAlert("proxy"); return; }
+    if(!isProxyHosted()&&!proxyBase()){ showPermAlert("proxy"); return; }
     if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){ showPermAlert("nosr"); return; }
     var url=asrWsUrl();
     var ws;

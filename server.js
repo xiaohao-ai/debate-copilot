@@ -270,7 +270,8 @@ function buildLLMMessages(p) { return DebateLLM.buildLLMMessages(p); }
 
 /* ---------------- 静态文件服务 ---------------- */
 const MIME = { '.html': 'text/html;charset=utf-8', '.js': 'text/javascript;charset=utf-8', '.json': 'application/json;charset=utf-8', '.md': 'text/markdown;charset=utf-8' };
-const server = http.createServer(function (req, res) {
+// 请求处理器独立：有证书时挂到 HTTPS（局域网设备麦克风需要安全上下文），无证书时退回 HTTP（仅本机）
+const requestHandler = function (req, res) {
   // 允许 GitHub Pages 等静态页跨源连接自建代理（隧道/局域网部署）
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
@@ -343,7 +344,23 @@ const server = http.createServer(function (req, res) {
     res.writeHead(200, { 'Content-Type': MIME[path.extname(filePath)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
     res.end(data);
   });
-});
+};
+
+// 证书存在则启用 HTTPS（局域网设备麦克风需要安全上下文）；同时在 port+1 起 HTTP 跳转
+const CERT_FILE = path.join(ROOT, 'certs', 'cert.pem');
+const KEY_FILE = path.join(ROOT, 'certs', 'key.pem');
+let useTLS = false;
+try { useTLS = fs.existsSync(CERT_FILE) && fs.existsSync(KEY_FILE); } catch (e) {}
+const server = useTLS
+  ? https.createServer({ key: fs.readFileSync(KEY_FILE), cert: fs.readFileSync(CERT_FILE) }, requestHandler)
+  : http.createServer(requestHandler);
+if (useTLS) {
+  http.createServer(function (req, res) {
+    const host = (req.headers.host || '').replace(/:\d+$/, ':' + cfg0_port());
+    res.writeHead(301, { Location: 'https://' + host + req.url }); res.end();
+  }).listen(cfg0_port() + 1, '0.0.0.0');
+}
+function cfg0_port() { return readConfig().port; }
 
 server.on('upgrade', function (req, socket) {
   if ((req.url || '').split('?')[0] !== '/asr') { socket.destroy(); return; }
@@ -366,10 +383,16 @@ server.listen(cfg0.port, '0.0.0.0', function () {
       ifs[name].forEach(function (ni) { if (ni.family === 'IPv4' && !ni.internal && !lanIp) lanIp = ni.address; });
     });
   } catch (e) {}
+  const scheme = useTLS ? 'https' : 'http';
   console.log('========================================================');
-  console.log(' 反方辩论作战台 · 本地代理已启动');
-  console.log(' 本机访问： http://127.0.0.1:' + cfg0.port + '（推荐，麦克风可用）');
-  if (lanIp) console.log(' 同局域网访问： http://' + lanIp + ':' + cfg0.port + '（注意：非 localhost 的 http 页面浏览器会禁用麦克风，外网分享请用 HTTPS 隧道或 GitHub Pages）');
+  console.log(' 反方辩论作战台 · 本地代理已启动（' + (useTLS ? 'HTTPS 局域网模式' : 'HTTP 仅本机模式') + '）');
+  console.log(' 本机访问： ' + scheme + '://127.0.0.1:' + cfg0.port);
+  if (lanIp) {
+    console.log(' 局域网其他设备（手机/平板/队友电脑，需连同一 WiFi）：');
+    console.log('   ' + scheme + '://' + lanIp + ':' + cfg0.port);
+    if (useTLS) console.log('   首次打开会提示证书不受信任：点「高级/显示详细信息」→「仍要继续」即可，iPhone 需在 设置→通用→关于本机→证书信任设置 中信任一次');
+    else console.log('   警告：HTTP 明文地址下浏览器会禁用麦克风，仅本机 127.0.0.1 可用；要给局域网用请放入 certs/ 证书启用 HTTPS');
+  }
   console.log(' 密钥状态：' + (cfg0.apiKey || (cfg0.appKey && cfg0.accessKey) ? '已配置' : '未配置（请编辑 config.json 后重启）'));
   console.log(' 识别线路：' + cfg0.resourceId + '  ' + cfg0.upstreamPath);
   console.log(' 豆包大模型(AI生成)：' + (cfg0.arkApiKey ? '已配置 · ' + cfg0.arkModel : '未配置（config.json 填 arkApiKey 后启用 AI 生成）'));
